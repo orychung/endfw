@@ -1,8 +1,8 @@
 
+const os = require('os');
 const fs = require('fs');
 const path = require('path');
-
-const {g, now, pass} = require('../../js/quick_tool');
+const {g, pass, sequenceGenerator} = require('../common/global');
 
 class server {
     constructor(project, domain, port) {
@@ -20,8 +20,12 @@ class server {
         var cookieParser = require('cookie-parser');
         var contentSecurityPolicy = require('helmet-csp');
         this.app = express();
-        this.app.use(express.json()); // for parsing application/json
-        this.app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
+        var getRawBody = function(req, res, buf, encoding) {
+            // TODO: add unzip logic before this
+            req.rawBody = buf.toString(encoding || 'utf8');
+        }
+        this.app.use(express.json({ verify: getRawBody })); // for parsing application/json
+        this.app.use(express.urlencoded({ limit: '50MB', verify: getRawBody, extended: true })); // for parsing application/x-www-form-urlencoded
         this.app.use(cookieParser('<abc>this is the secret</abc>'));
         this.app.use(contentSecurityPolicy({
             directives: {
@@ -34,14 +38,14 @@ class server {
             loose: false
         }));
     }
-    startHTTPS() {
-        const options = {
-            key: fs.readFileSync('../ssl/key.pem'),
-            cert: fs.readFileSync('../ssl/cert.pem'),
-            passphrase: 'changeit'
+    startHTTPS(options = {}) {
+        const httpsOptions = {
+            key: fs.readFileSync(options.keyPath || '../ssl/key.pem'),
+            cert: fs.readFileSync(options.certPath || '../ssl/cert.pem'),
+            passphrase: options.passphrase || 'changeit'
         };
         var https = require('https');
-        this.httpsServer = https.createServer(options, this.app);
+        this.httpsServer = https.createServer(httpsOptions, this.app);
         this.httpsServer.listen(this.port, this.domain, () => this.log('Server running at '+this.url));
     }
     initWS() {
@@ -194,6 +198,30 @@ class peer {
     }
 }
 
+function localIP() {
+/* naive local IP lookup to handle the simplest case that
+ * only one interface is using the 255.255.255.0 mask */
+    var ifaces = os.networkInterfaces();
+    var result
+    Object.keys(ifaces).forEach(function (key) {
+        ifaces[key].forEach(function (ip) {
+            if (ip.netmask == '255.255.255.0') result=ip.address;
+        });
+    });
+    return result;
+}
+
+function resetCache(lib_path) {
+    var actualPath;
+    if (lib_path.endsWith('.sql')
+        || lib_path.endsWith('.js')) {
+        actualPath = path.resolve(lib_path);
+    } else {
+        actualPath = path.resolve(lib_path)+'.js';
+    }
+    delete require.cache[actualPath];
+}
+
 // for being imported as node module
 if (typeof module === 'undefined') {
     // skip if not running node
@@ -202,6 +230,8 @@ if (typeof module === 'undefined') {
         server: server,
         returner: returner,
         session: session,
-        peer: peer
+        peer: peer,
+        localIP: localIP,
+        resetCache: resetCache
     }
 }
