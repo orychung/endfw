@@ -38,6 +38,11 @@ class server {
             loose: false
         }));
     }
+    startHTTP(options = {}) {
+        var http = require('http');
+        this.httpServer = http.createServer(this.app);
+        this.httpServer.listen(this.port, this.domain, () => this.log('Server running at '+this.httpUrl));
+    }
     startHTTPS(options = {}) {
         const httpsOptions = {
             key: fs.readFileSync(options.keyPath || '../ssl/key.pem'),
@@ -63,6 +68,7 @@ class server {
         ].reduce((p, x) => (p || (fs.existsSync(x)?x:null)), null) || callback();
     }
     get url() {return 'https://'+this.domain+':'+this.port;}
+    get httpUrl() {return 'http://'+this.domain+':'+this.port;}
 }
 
 const cbNotFound = function(ret, filePath) {
