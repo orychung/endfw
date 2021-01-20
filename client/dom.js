@@ -1,5 +1,6 @@
-// must include jquery.js
+// must include quick_jquery.js
 // must include global.js
+// must include text.js
 
 /* Usage to support: 
 

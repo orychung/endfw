@@ -61,11 +61,14 @@ class server {
         });
     }
     disposePeer(peer) {this.peerDisposal(peer);}
-    checkResource(filePath, callback=pass) {
-        return [
+	resourceList(filePath) {
+		return [
             './proj/'+this.project+filePath,
             '.'+filePath
-        ].reduce((p, x) => (p || (fs.existsSync(x)?x:null)), null) || callback();
+        ];
+	}
+    checkResource(filePath, callback=pass) {
+        return this.resourceList(filePath).reduce((p, x) => (p || (fs.existsSync(x)?x:null)), null) || callback();
     }
     get url() {return 'https://'+this.domain+':'+this.port;}
     get httpUrl() {return 'http://'+this.domain+':'+this.port;}
@@ -144,15 +147,17 @@ class returner {
             this.res.end(html);
         }
     }
-    html(data='') {
-        this.res.writeHead(200, {'Content-Type': 'text/html'});
-        this.res.end(data);
-    }
     error(code=400, message, data=null, mimeType='text/html') {
         this.server.log('['+code+'] '+message);
         this.res.writeHead(code, {'Content-Type': 'text/html'});
         this.res.end(data);
     }
+	success(data='', code=200, mimeType='text/html') {
+        this.res.writeHead(code, {'Content-Type': mimeType});
+		this.res.end(data);
+	}
+    html(data='', code=200) {this.success(data, code, 'text/html');}
+	xml(data='', code=200) {this.success(data, code, 'text/xml;charset=UTF-8');}
     get jsonMsg() {
         return new Proxy(this, {get: function(x, name) {
             return () => x.jsonError(

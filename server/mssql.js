@@ -1,8 +1,4 @@
-/* my installation history
 
-npm install mssql
-
-*/
 const sql = require('mssql');
 var defaultConfig = {
     user: 'node',
@@ -24,7 +20,7 @@ class connection {
 	async connect() {
 		if (this.connected == false || this.connection == null) {
 			try {
-				this.connection = await sql.connect(this.config);
+				this.connection = (await sql.connect(this.config)).request();
 				this.connected = true;
 			} catch (err) {
 				// ... error checks
@@ -46,7 +42,7 @@ class connection {
 			}
 		});
 		
-		try {return {data: await this.connection.request().query(query), errorState: 0};}
+		try {return {data: await this.connection.query(query), errorState: 0};}
 		catch (e) {return {error: e, errorState: 1};}
 	}
 	async runRows(query, params) {
@@ -65,7 +61,7 @@ class connection {
 		onSuccess=(r) => console.log(r),
 		onError=(e) => console.log(e)
 	) {
-		this.connection.request().query(query)
+		this.connection.query(query)
 		.then((r) => onSuccess(r))
 		.catch((e) => onError(e));
 	}
