@@ -35,7 +35,7 @@ class server {
                 imgSrc: ["'self'", "data:"],
                 frameSrc: ["'self'", "https://www.bridgebase.com/"]
             },
-            loose: false
+            // loose: false
         }));
     }
     startHTTP(options = {}) {
