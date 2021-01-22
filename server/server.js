@@ -27,16 +27,14 @@ class server {
         this.app.use(express.json({ verify: getRawBody })); // for parsing application/json
         this.app.use(express.urlencoded({ limit: '50MB', verify: getRawBody, extended: true })); // for parsing application/x-www-form-urlencoded
         this.app.use(cookieParser('<abc>this is the secret</abc>'));
-        this.app.use(contentSecurityPolicy({
-            directives: {
-                defaultSrc: ["'self'"],
-                scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com/", "https://code.jquery.com/"],
-                styleSrc: ["'self'", "'unsafe-inline'"],
-                imgSrc: ["'self'", "data:"],
-                frameSrc: ["'self'", "https://www.bridgebase.com/"]
-            },
-            // loose: false
-        }));
+		this.cspDirectives = {
+			defaultSrc: ["'self'"],
+			scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com/", "https://code.jquery.com/"],
+			styleSrc: ["'self'", "'unsafe-inline'"],
+			imgSrc: ["'self'", "data:"],
+			frameSrc: ["'self'"]
+		};
+        this.app.use(contentSecurityPolicy({directives: this.cspDirectives}));
     }
     startHTTP(options = {}) {
         var http = require('http');
@@ -85,6 +83,8 @@ class returner {
     constructor(res, server) {
         this.res = res;
         this.server = server;
+		this.addHeader = {};
+		this.headClosed = false;
     }
     static messages = {
         paramNotEnough : {code: 400, msg: 'insufficient parameters'},
@@ -92,11 +92,27 @@ class returner {
         methodNotFound : {code: 404, msg: 'method not found'},
         dataNotReady   : {code: 500, msg: 'fail to get data'}
     }
+	closeHead(httpCode, extraHeader) {
+		if (this.headClosed) {
+			console.warn('Returner header is previously closed. Ignore this closeHead call.');
+			return;
+		}
+		Object.assign(this.addHeader, extraHeader);
+		this.res.writeHead(httpCode, this.addHeader);
+		this.headClosed = true;
+	}
+	setCache(maxAge=0, isPublic=false) {
+		this.addHeader['Cache-Control'] = [
+			isPublic?'public,':'private,',
+			'max-age=' + maxAge
+		].join('');
+		return this;
+	}
     download(filePath) {
         // this.server.log('[200] return download: '+filePath);
         var resourcePath = this.server.checkResource(filePath, cbNotFound(this, filePath));
         if (resourcePath) {
-            this.res.writeHead(200, {
+            this.closeHead(200, {
                 "Content-Type": "application/octet-stream",
                 "Content-Disposition" : "attachment; filename=" + path.basename(resourcePath)
             });
@@ -105,10 +121,21 @@ class returner {
     }
     file(filePath, mimeType='text/html', standalone=false) {
         // this.server.log('[200] return file: '+filePath);
+		if (mimeType == 'auto') {
+			var ext = filePath.split('.').slice(-1)[0].toLowerCase();
+			mimeType = {
+				'js': 'text/javascript',
+				'html': 'text/html',
+				'xml': 'text/xml',
+				'yaml': 'text/x-yaml',
+				'css': 'text/css',
+				'png': 'image/png',
+			}[ext] || 'text/plain';
+		}
         var resourcePath = this.server.checkResource(filePath, cbNotFound(this, filePath));
         if (resourcePath) {
             if (mimeType == 'image/png') {
-                this.res.writeHead(200, {'Content-Type': mimeType});
+                this.closeHead(200, {'Content-Type': mimeType});
                 fs.createReadStream(resourcePath).pipe(this.res);
                 return;
             }
@@ -143,17 +170,17 @@ class returner {
                 this.server.log(err);
                 return this.error(500);
             }
-            this.res.writeHead(200, {'Content-Type': mimeType});
+            this.closeHead(200, {'Content-Type': mimeType});
             this.res.end(html);
         }
     }
     error(code=400, message, data=null, mimeType='text/html') {
         this.server.log('['+code+'] '+message);
-        this.res.writeHead(code, {'Content-Type': 'text/html'});
+        this.closeHead(code, {'Content-Type': 'text/html'});
         this.res.end(data);
     }
 	success(data='', code=200, mimeType='text/html') {
-        this.res.writeHead(code, {'Content-Type': mimeType});
+        this.closeHead(code, {'Content-Type': mimeType});
 		this.res.end(data);
 	}
     html(data='', code=200) {this.success(data, code, 'text/html');}
@@ -171,7 +198,7 @@ class returner {
         this.error(code, message, JSON.stringify(data), mimeType);
     }
     json(data=Object(), code=200, mimeType='application/json') {
-        this.res.writeHead(code, {'Content-Type': mimeType});
+        this.closeHead(code, {'Content-Type': mimeType});
         this.res.end(JSON.stringify(data));
     }
 }
