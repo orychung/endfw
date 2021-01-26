@@ -27,13 +27,7 @@ class server {
         this.app.use(express.json({ verify: getRawBody })); // for parsing application/json
         this.app.use(express.urlencoded({ limit: '50MB', verify: getRawBody, extended: true })); // for parsing application/x-www-form-urlencoded
         this.app.use(cookieParser('<abc>this is the secret</abc>'));
-		this.cspDirectives = {
-			defaultSrc: ["'self'"],
-			scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com/", "https://code.jquery.com/"],
-			styleSrc: ["'self'", "'unsafe-inline'"],
-			imgSrc: ["'self'", "data:"],
-			frameSrc: ["'self'"]
-		};
+		this.cspDirectives = JSON.parse(JSON.stringify(server.defaultCspDirectives));
         this.app.use(contentSecurityPolicy({directives: this.cspDirectives}));
     }
     startHTTP(options = {}) {
@@ -71,6 +65,13 @@ class server {
     get url() {return 'https://'+this.domain+':'+this.port;}
     get httpUrl() {return 'http://'+this.domain+':'+this.port;}
 }
+server.defaultCspDirectives = {
+	defaultSrc: ["'self'"],
+	scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com/", "https://code.jquery.com/"],
+	styleSrc: ["'self'", "'unsafe-inline'"],
+	imgSrc: ["'self'", "data:"],
+	frameSrc: ["'self'"]
+};
 
 const cbNotFound = function(ret, filePath) {
     return function() {
@@ -85,12 +86,18 @@ class returner {
         this.server = server;
 		this.addHeader = {};
 		this.headClosed = false;
+        this.variableAssignment = {};
+        this.variablePlaceholder = (name) => '[['+name+']]';
     }
     static messages = {
         paramNotEnough : {code: 400, msg: 'insufficient parameters'},
         noLogin        : {code: 401, msg: 'not logged in'},
         methodNotFound : {code: 404, msg: 'method not found'},
         dataNotReady   : {code: 500, msg: 'fail to get data'}
+    }
+    fillVariable(key, value) {
+        this.variableAssignment[key] = value;
+        return this;
     }
 	closeHead(httpCode, extraHeader) {
 		if (this.headClosed) {
@@ -141,6 +148,9 @@ class returner {
             }
             try {
                 var html = fs.readFileSync(resourcePath).toString();
+                for (var key in this.variableAssignment) {
+                    html = html.split(this.variablePlaceholder(key)).join(this.variableAssignment[key]);
+                }
                 if (standalone) {
                 // perform content substitution to make the page standalone
                     var re = new RegExp('  <link rel="stylesheet" type="text/css" href="[.][.]([^"]+)" />', 'g');
