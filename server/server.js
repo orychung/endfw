@@ -48,6 +48,13 @@ class server {
     initWS() {
         var WebSocketServer = require('websocket').server;
         this.ws = new WebSocketServer({
+            httpServer: this.httpServer,
+            autoAcceptConnections: false
+        });
+    }
+    initWSS() {
+        var WebSocketServer = require('websocket').server;
+        this.wss = new WebSocketServer({
             httpServer: this.httpsServer,
             autoAcceptConnections: false
         });
@@ -67,7 +74,7 @@ class server {
 }
 server.defaultCspDirectives = {
 	defaultSrc: ["'self'"],
-	scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com/", "https://code.jquery.com/"],
+	scriptSrc: ["'self'", "'unsafe-inline'"],
 	styleSrc: ["'self'", "'unsafe-inline'"],
 	imgSrc: ["'self'", "data:"],
 	frameSrc: ["'self'"]
@@ -137,6 +144,7 @@ class returner {
 				'yaml': 'text/x-yaml',
 				'css': 'text/css',
 				'png': 'image/png',
+				'json': 'application/json',
 			}[ext] || 'text/plain';
 		}
         var resourcePath = this.server.checkResource(filePath, cbNotFound(this, filePath));
@@ -189,6 +197,7 @@ class returner {
         this.closeHead(code, {'Content-Type': 'text/html'});
         this.res.end(data);
     }
+	xmlError(code, message, data) {this.error(code, message, data, 'text/xml;charset=UTF-8');}
 	success(data='', code=200, mimeType='text/html') {
         this.closeHead(code, {'Content-Type': mimeType});
 		this.res.end(data);
