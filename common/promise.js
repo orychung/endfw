@@ -107,6 +107,17 @@ class comPromise extends Promise {
     static race(promiseList) {return this.composite(promiseList, 'race');}
 }
 
+// for being imported as node module
+if (typeof module === 'undefined') {
+    // skip if not running node
+} else {
+    module.exports = {
+        triggerFactory: triggerFactory,
+        doAsync: doAsync,
+        comPromise
+    }
+}
+
 // // Example 1
 // var manualTrigger = Promise.any([new Promise(()=>'never resolve or reject'), triggerFactory('manual').promise]);
 // manualTrigger.then(res=>{
