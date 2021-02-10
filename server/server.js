@@ -5,7 +5,7 @@ const path = require('path');
 const WebSocketServer = require('websocket').server;
 const {g, pass, sequenceGenerator} = require('../common/global');
 
-class server {
+class Server {
     constructor(project, domain, port, options = {}) {
         this.project = project;
         this.domain = domain;
@@ -87,7 +87,7 @@ const cbNotFound = function(ret, filePath) {
         return null;
     }
 };
-class returner {
+class Returner {
     constructor(res, server) {
         this.res = res;
         this.server = server;
@@ -222,7 +222,7 @@ class returner {
     }
 }
 
-class session {
+class Session {
     constructor(id, server, ip) {
         this.id = id;
         this.server = server;
@@ -240,7 +240,7 @@ class session {
     }
 }
 
-class peer {
+class Peer {
     constructor(id, connection, server, session) {
         this.id = id;
         this.connection = connection;
@@ -268,27 +268,15 @@ function localIP() {
     return result;
 }
 
-function resetCache(lib_path) {
-    var actualPath;
-    if (lib_path.endsWith('.sql')
-        || lib_path.endsWith('.js')) {
-        actualPath = path.resolve(lib_path);
-    } else {
-        actualPath = path.resolve(lib_path)+'.js';
-    }
-    delete require.cache[actualPath];
-}
-
 // for being imported as node module
 if (typeof module === 'undefined') {
     // skip if not running node
 } else {
     module.exports = {
-        server: server,
-        returner: returner,
-        session: session,
-        peer: peer,
-        localIP: localIP,
-        resetCache: resetCache
+        Server: Server,
+        Returner: Returner,
+        Session: Session,
+        Peer: Peer,
+        localIP: localIP
     }
 }
