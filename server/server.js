@@ -2,16 +2,19 @@
 const os = require('os');
 const fs = require('fs');
 const path = require('path');
+const WebSocketServer = require('websocket').server;
 const {g, pass, sequenceGenerator} = require('../common/global');
 
 class server {
-    constructor(project, domain, port) {
+    constructor(project, domain, port, options = {}) {
         this.project = project;
         this.domain = domain;
         this.port = port;
         
-        this.log = pass;
-        this.peerDisposal = pass;
+        this.log = options.log || pass;
+        this.peerDisposal = options.peerDisposal || pass;
+        this.cookieSecret = options.cookieSecret || '<abc>this is the secret</abc>';
+		this.cspDirectives = options.cspDirectives || JSON.parse(JSON.stringify(server.defaultCspDirectives));
         
         this.initApp();
     }
@@ -26,8 +29,7 @@ class server {
         }
         this.app.use(express.json({ verify: getRawBody })); // for parsing application/json
         this.app.use(express.urlencoded({ limit: '50MB', verify: getRawBody, extended: true })); // for parsing application/x-www-form-urlencoded
-        this.app.use(cookieParser('<abc>this is the secret</abc>'));
-		this.cspDirectives = JSON.parse(JSON.stringify(server.defaultCspDirectives));
+        this.app.use(cookieParser(this.cookieSecret));
         this.app.use(contentSecurityPolicy({directives: this.cspDirectives}));
     }
     startHTTP(options = {}) {
@@ -46,14 +48,12 @@ class server {
         this.httpsServer.listen(this.port, this.domain, () => this.log('Server running at '+this.url));
     }
     initWS() {
-        var WebSocketServer = require('websocket').server;
         this.ws = new WebSocketServer({
             httpServer: this.httpServer,
             autoAcceptConnections: false
         });
     }
     initWSS() {
-        var WebSocketServer = require('websocket').server;
         this.wss = new WebSocketServer({
             httpServer: this.httpsServer,
             autoAcceptConnections: false
@@ -133,7 +133,7 @@ class returner {
             fs.createReadStream(resourcePath).pipe(this.res);
         }
     }
-    file(filePath, mimeType='text/html', standalone=false) {
+    file(filePath, mimeType='auto', standalone=false) {
         // this.server.log('[200] return file: '+filePath);
 		if (mimeType == 'auto') {
 			var ext = filePath.split('.').slice(-1)[0].toLowerCase();
@@ -149,7 +149,7 @@ class returner {
 		}
         var resourcePath = this.server.checkResource(filePath, cbNotFound(this, filePath));
         if (resourcePath) {
-            if (mimeType == 'image/png') {
+            if (!mimeType.startsWith('text/')) {
                 this.closeHead(200, {'Content-Type': mimeType});
                 fs.createReadStream(resourcePath).pipe(this.res);
                 return;

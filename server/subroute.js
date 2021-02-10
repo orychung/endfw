@@ -34,11 +34,16 @@ class subroute {
                     (err) => this.beginErrorRoute(err, req, res, next)
                 );
                 var mw = this.middlewares[mwIndex];
-                ((mw instanceof subroute)?mw.beginRoute:mw)(req, res, localNext);
+                if (mw instanceof subroute) {
+                    mw.beginRoute(req, res, localNext);
+                } else {
+                    mw(req, res, localNext);
+                };
                 await nextCalled.promise;
                 if (!nextCalled.fired) return;
                 mwIndex = mwIndex + 1;
             }
+            next();
         } catch (err) {next(err);}
     }
     async beginErrorRoute(err, req, res, next) {
