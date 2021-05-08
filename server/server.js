@@ -14,7 +14,7 @@ class Server {
         this.log = options.log || pass;
         this.peerDisposal = options.peerDisposal || pass;
         this.cookieSecret = options.cookieSecret || '<abc>this is the secret</abc>';
-		this.cspDirectives = options.cspDirectives || JSON.parse(JSON.stringify(server.defaultCspDirectives));
+		this.cspDirectives = options.cspDirectives || JSON.parse(JSON.stringify(Server.defaultCspDirectives));
         
         this.initApp();
     }
@@ -72,7 +72,7 @@ class Server {
     get url() {return 'https://'+this.domain+':'+this.port;}
     get httpUrl() {return 'http://'+this.domain+':'+this.port;}
 }
-server.defaultCspDirectives = {
+Server.defaultCspDirectives = {
 	defaultSrc: ["'self'"],
 	scriptSrc: ["'self'", "'unsafe-inline'"],
 	styleSrc: ["'self'", "'unsafe-inline'"],
@@ -114,7 +114,12 @@ class Returner {
 		Object.assign(this.addHeader, extraHeader);
 		this.res.writeHead(httpCode, this.addHeader);
 		this.headClosed = true;
+        return this;
 	}
+    setHead(header) {
+		Object.assign(this.addHeader, header);
+        return this;
+    }
 	setCache(maxAge=0, isPublic=false) {
 		this.addHeader['Cache-Control'] = [
 			isPublic?'public,':'private,',
@@ -144,6 +149,7 @@ class Returner {
 				'yaml': 'text/x-yaml',
 				'css': 'text/css',
 				'png': 'image/png',
+                'svg': 'image/svg+xml',
 				'json': 'application/json',
 			}[ext] || 'text/plain';
 		}
@@ -207,8 +213,8 @@ class Returner {
     get jsonMsg() {
         return new Proxy(this, {get: function(x, name) {
             return () => x.jsonError(
-                returner.messages[name].code,
-                returner.messages[name].msg
+                Returner.messages[name].code,
+                Returner.messages[name].msg
             );
         }});
     }

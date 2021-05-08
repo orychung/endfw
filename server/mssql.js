@@ -11,6 +11,11 @@ var defaultConfig = {
     }
 }
 
+const singleQuoteRE = new RegExp(/'/g);
+function quoteEsc(text) {
+    if (!text) return text;
+    return text.replace(singleQuoteRE, "''");
+}
 class connection {
 	constructor (config = {}) {
 		this.connected = false;
@@ -20,7 +25,9 @@ class connection {
 	async connect() {
 		if (this.connected == false || this.connection == null) {
 			try {
-				this.connection = (await sql.connect(this.config)).request();
+				this.connection = await sql.connect(this.config);
+                this.defaultRequest = this.connection.request();
+                this.request = this.defaultRequest;
 				this.connected = true;
 			} catch (err) {
 				// ... error checks
@@ -34,7 +41,7 @@ class connection {
 			if (x != null) {
 				var y;
 				if (x.__proto__.hasOwnProperty('replace')) {
-					y = x.replace(/'/g, "''");
+					y = quoteEsc(x);
 				} else {
 					y = x;
 				};
@@ -42,7 +49,7 @@ class connection {
 			}
 		});
 		
-		try {return {data: await this.connection.query(query), errorState: 0};}
+		try {return {data: await this.request.query(query), errorState: 0};}
 		catch (e) {return {error: e, errorState: 1};}
 	}
 	async runRows(query, params) {
@@ -61,10 +68,52 @@ class connection {
 		onSuccess=(r) => console.log(r),
 		onError=(e) => console.log(e)
 	) {
-		this.connection.query(query)
+		this.request.query(query)
 		.then((r) => onSuccess(r))
 		.catch((e) => onError(e));
 	}
+    async beginTransaction() {
+        try {
+            if (this.transaction) await this.transaction;
+            this.transaction = new Promise((s,f)=>{
+                this._endTransaction = s;
+            });
+            var thisTransaction = new transaction(this);
+            await thisTransaction.ready;
+            return thisTransaction;
+		} catch (e) {console.log(e);}
+    }
+    endTransaction() {
+        if (this._endTransaction) {
+            this._endTransaction();
+            delete this.transaction;
+            this.request = this.defaultRequest;
+        } else {
+            throw Error('connection.endTransaction is called without a beginTransaction');
+        }
+    }
+}
+class transaction {
+    constructor (connection) {
+        this.connection = connection;
+        this.transaction = new sql.Transaction(connection.connection);
+        var transactionBegun;
+        this.ready = new Promise((s,f)=>{
+            transactionBegun = s;
+        });
+        this.transaction.begin(e=>{
+            connection.request = new sql.Request(this.transaction);
+            transactionBegun();
+        });
+    }
+    async commit() {
+        await this.transaction.commit();
+        this.connection.endTransaction();
+    }
+    async rollback() {
+        await this.transaction.rollback();
+        this.connection.endTransaction();
+    }
 }
 
 // for being imported as node module
@@ -74,6 +123,7 @@ if (typeof module === 'undefined') {
     module.exports = {
 		sql: sql,
 		defaultConfig: defaultConfig,
-		connection: connection
+		connection: connection,
+        quoteEsc: quoteEsc
     }
 }

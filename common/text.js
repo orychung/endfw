@@ -1,5 +1,6 @@
 
 function amp_encode(text) {
+    if (!text) return text;
     var newText = text;
     newText = newText.replace(/&/g,'&amp;');
     newText = newText.replace(/</g,'&lt;');

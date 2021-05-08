@@ -2,18 +2,24 @@
 // must include quick_tool.js
 
 function regIdHandlers() {
-	var handlers = Object.keys(globalThis).filter(x=>x.includes('$'));
+    var gThis;
+    try {
+        gThis = globalThis;
+    } catch (e) {
+        gThis = window;
+    }
+	var handlers = Object.keys(gThis).filter(x=>x.includes('$'));
 	handlers.forEach(handler=>{
 		let [objectId, eventType] = handler.split('$');
 		if ([
-			'click',
+			'click', 'dblclick',
             'mouseover', 'mouseup', 'mousedown', 'mouseenter', 'mouseleave', 'mousemove',
 			'keypress', 'keyup', 'keydown',
 			'focus',
             'change', 'input'
 		].includes(eventType)) {
 			$('#'+objectId).off(eventType);
-			$('#'+objectId).on(eventType, globalThis[handler]);
+			$('#'+objectId).on(eventType, gThis[handler]);
 		}
 	})
 }
@@ -47,7 +53,7 @@ function setCssEvents() {
             return true;
         } else {
             var use_menu = nearest.getAttribute('use_menu');
-            if (use_menu in g.showMenu) g.showMenu[use_menu](e, use_menu);
+            if (use_menu in g.showMenu) g.showMenu[use_menu](e, nearest);
             return false;
         }
     };

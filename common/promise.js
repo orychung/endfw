@@ -114,7 +114,7 @@ if (typeof module === 'undefined') {
     module.exports = {
         triggerFactory: triggerFactory,
         doAsync: doAsync,
-        comPromise
+        comPromise: comPromise
     }
 }
 

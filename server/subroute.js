@@ -42,7 +42,7 @@ class Subroute {
                 if (mwDef.method && (mwDef.method != req.method)) skip = true;
                 if (mwDef.url) {
                     var pattern = new UrlPattern(mwDef.url);
-                    var params = pattern.match(request.pathname);
+                    var params = pattern.match(req.url);
                     if (params == null) {
                         skip = true;
                     } else {

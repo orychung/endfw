@@ -29,6 +29,10 @@ Object.defineProperty(Array.prototype, 'shuffle', addMethod(function shuffle() {
     };
     return this;
 }));
+Object.defineProperty(Object.prototype, 'touch', addMethod(function touch(key, defaultValue={}) {
+    if (!(key in this)) this[key] = defaultValue;
+    return this[key];
+}));
 
 // jQuery methods
 Object.defineProperty(Object.prototype, 'attr', addMethod(function attr(key, value) {
@@ -156,7 +160,8 @@ var builtin_doc = {
         asPMF: "bridge to apply stat.js", // require stat.js
         convert: "similar to Array.map, but store the outcome in place",
 		logDebug: "[debug use] log function of this (useful for method chain)",
-		logThis: "[debug use] log this (useful for method chain)"
+		logThis: "[debug use] log this (useful for method chain)",
+        touch: "locate an attribute and allow fitting a default if not existing"
     },
     String: {
         likeRE: "analog of SQL like, changed to use RE as pattern",
