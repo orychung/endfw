@@ -70,22 +70,30 @@ class idb {
 		return this;
     }
 	async createObjectStore(name, keyOptions) {
+        if (!name) throw Error('name must be specified');
+        var createdItem;
 		await this.alterDB(db=>{
 			if (!db.objectStoreNames.contains(name)) {
 				db.createObjectStore(name, keyOptions);
 				this.stores[name] = new idbStore(this, name);
+                createdItem = this.stores[name];
 			}
 		});
-		return this;
+		return createdItem;
 	}
 	async deleteObjectStore(name) {
+        if (!name) throw Error('name must be specified');
+        var itemDeleted;
 		await this.alterDB(db=>{
 			if (db.objectStoreNames.contains(name)) {
 				db.deleteObjectStore(name);
 				delete this.stores[name];
-			}
+                itemDeleted = true;
+			} else {
+                itemDeleted = false;
+            }
 		});
-		return this;
+		return itemDeleted;
 	}
     async lookup(storeName, key) {
         return ((await this.stores[storeName].get(key))[0] || {}).value;
@@ -101,14 +109,20 @@ class idb {
         this.db = await openRequest.promise;
         return this;
     }
-    static async getDB() {
+    static async list() {
         var dbs = await indexedDB.databases();
         return await dbs.map(x=>idb.newIDB(x.name)).done();
+    }
+    static async get(name) {
+        var dbNames = (await indexedDB.databases()).map(x=>x.name);
+        if (!dbNames.includes(name)) return;
+        return await idb.newIDB(name);
     }
 	static async newIDB(name, version, action) {
 		return new idb(await idb.newDB(name, version, action));
 	}
     static async newDB(name, version, action) {
+        // mainly for private use (to reduce construction waste)
 		let openRequest = indexedDB.open(name, version)
 		openRequest.onupgradeneeded = (e)=>((req, e)=>action && action(req.result, req, e))(openRequest, e);
 		return await openRequest.promise;
@@ -130,7 +144,15 @@ class idbStore {
 	constructor(idb, storeName) {
 		this.idb = idb;
 		this.name = storeName;
+        this.enableRequestLog = false;
 	}
+    requestWrap(request) {
+        if (this.enableRequestLog) {
+            return request.withLog.promise;
+        } else {
+            return request.promise;
+        }
+    }
 	transaction(readonly) {
         try {
             return this.idb.db.transaction(this.name, readonly?"readonly":"readwrite");
@@ -152,34 +174,27 @@ class idbStore {
         return this;
     }
 	async delete(query) {
-		let request = this.forUpdate.delete(query);
-		return request.withLog.promise;
+		return this.requestWrap(this.forUpdate.delete(query));
 	}
 	async add(value, key) {
-		let request = this.forUpdate.add(value, key);
-		return request.withLog.promise;
+		return this.requestWrap(this.forUpdate.add(value, key));
 	}
 	async put(value, key) {
-		let request = this.forUpdate.put(value, key);
-		return request.withLog.promise;
+        return this.requestWrap(this.forUpdate.put(value, key));
 	}
 	async get(query) {
-		let request = this.forRead.getAll(query);
-		return request.withLog.promise;
+        return this.requestWrap(this.forRead.getAll(query));
 	}
 	async getKeys(query) {
-		let request = this.forRead.getAllKeys(query);
-		return request.withLog.promise;
+        return this.requestWrap(this.forRead.getAllKeys(query));
 	}
 	async getRange(lower, upper, lowerOpen, upperOpen) {
 		let query = idb.boundTranslate(lower, upper, lowerOpen, upperOpen);
-		let request = this.forRead.getAll(query);
-		return request.withLog.promise;
+        return this.requestWrap(this.forRead.getAll(query));
 	}
 	async getKeyRange(lower, upper, lowerOpen, upperOpen) {
 		let query = idb.boundTranslate(lower, upper, lowerOpen, upperOpen);
-		let request = this.forRead.getAllKeys(query);
-		return request.withLog.promise;
+        return this.requestWrap(this.forRead.getAllKeys(query));
 	}
 }
 class idbIndex extends idbStore {

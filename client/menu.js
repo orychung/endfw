@@ -16,6 +16,28 @@
 
 */
 
+g.menu = {};
+g.menu.oncontextmenu = function(e) {
+    var nearest = $(e.target).filter('.use_menu')[0] || $(e.target).parents('.use_menu')[0];
+    if (nearest == null) {
+        return true;
+    } else {
+        var use_menu = nearest.getAttribute('use_menu');
+        var m = g.menu[use_menu];
+        if (m) {
+            g.currentMenu = m;
+            if (m.showMenu) {
+                m.showMenu(e, nearest);
+            } else {
+                g.menuTarget = nearest; // design for this app is marking use_menu at each row, not whole table
+                g.currentMenu.show(document.body, e.pageX, e.pageY);
+            };
+        }
+        return false;
+    }
+};
+window.oncontextmenu = g.menu.oncontextmenu;
+
 class menu extends param_text {
     constructor(id) {
         super('<menu id="[[id]]" tabindex="-1" onfocusout="hideMe(this);"></menu>',

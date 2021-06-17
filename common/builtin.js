@@ -29,9 +29,27 @@ Object.defineProperty(Array.prototype, 'shuffle', addMethod(function shuffle() {
     };
     return this;
 }));
+Object.defineProperty(Object.prototype, 'pushTo', addMethod(function pushTo(target, key) {
+    if (key) {
+        target[key] = this;
+    } else if (target instanceof Array) {
+        target.push(this);
+    } else {
+        throw Error('key-less pushTo only allow Array target');
+    }
+    return this;
+}));
 Object.defineProperty(Object.prototype, 'touch', addMethod(function touch(key, defaultValue={}) {
     if (!(key in this)) this[key] = defaultValue;
     return this[key];
+}));
+Object.defineProperty(Object.prototype, 'undergo', addMethod(function undergo(method, output=(t,r)=>r) {
+    if (output == 'i') output = x=>x;
+    if (method instanceof Array) {
+        return method.map(x=>output(this,x(this)));
+    } else {
+        return output(this,method(this));
+    }
 }));
 
 // jQuery methods
@@ -67,8 +85,8 @@ Object.defineProperty(Object.prototype, 'reduce', addMethod(function reduce(f, p
 Object.defineProperty(Object.prototype, 'exists', addMethod(function exists(f) {
     return Object.keys(this).reduce((p, x) => p || f(this[x], x, this), false);
 }));
-Object.defineProperty(Object.prototype, 'first', addMethod(function first(f=(x=>x), v=(x=>x)) {
-    for (var x in Object.keys(this)) if (f(this[x], x, this)) return v(this[x], x, this);
+Object.defineProperty(Object.prototype, 'first', addMethod(function first(f=(x=>x), c=(x=>true)) {
+    for (var x in Object.keys(this)) if (c(this[x], x, this)) return f(this[x], x, this);
     return null;
 }));
 Object.defineProperty(Object.prototype, 'max', addMethod(function max(f=(x=>x)) {
@@ -110,6 +128,9 @@ Object.defineProperty(Object.prototype, 'logThis', {
 		return this;
 	}
 });
+if ('jQuery' in globalThis) Object.defineProperty(Object.prototype, '$', {
+    get() {return $(this);}
+});
 
 // custom
 Object.defineProperty(String.prototype, 'likeRE', addMethod(function likeRE(re) {
@@ -145,6 +166,7 @@ var builtin_doc = {
         shuffle: "reorder items randomly"
     },
     Object: {
+        $: "init object with jQuery $",
         attr: "quasi-analog of jQuery attr, do not support single param use",
         filterArray: "quasi-analog of Array.filter, return an Array of Object.keys order",
         filterObject: "quasi-analog of Array.filter, return an Object",
@@ -152,7 +174,7 @@ var builtin_doc = {
         mapObject: "quasi-analog of Array.map, return an Object",
         mapKeyValue: "quasi-analog of Array.map, return an Object fKey, fVal",
         reduce: "analog of Array.reduce",
-        first: "analog of SQL first v(x,i,w) to make f(x,i,w) true",
+        first: "analog of SQL first f(x,i,w) to make c(x,i,w) true",
         max: "analog of SQL max f(x,i,w)",
         min: "analog of SQL min f(x,i,w)",
         sum: "analog of SQL sum f(x,i,w)",
@@ -161,15 +183,17 @@ var builtin_doc = {
         convert: "similar to Array.map, but store the outcome in place",
 		logDebug: "[debug use] log function of this (useful for method chain)",
 		logThis: "[debug use] log this (useful for method chain)",
-        touch: "locate an attribute and allow fitting a default if not existing"
+        pushTo: "add this to an array or an object",
+        touch: "locate an attribute and allow fitting a default if not existing",
+        undergo: "pass this to a function (or array of functions) and return the result",
     },
     String: {
         likeRE: "analog of SQL like, changed to use RE as pattern",
-        splitNum: "split but added parseInt"
+        splitNum: "split but added parseInt",
     },
     JSON: {
         serialCopy: "copy object by stringify and parse",
-        listify: "output JSON as a list"
+        listify: "output JSON as a list",
     }
 }
 

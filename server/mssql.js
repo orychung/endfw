@@ -53,15 +53,22 @@ class connection {
 		catch (e) {return {error: e, errorState: 1};}
 	}
 	async runRows(query, params) {
-		try {
-			var r = await this.run(query, params);
-			if (r.errorState == 0) {
-				return r.data.recordset;
-			} else {
-				console.log(r.error);
-				throw new Error();
-			}
-		} catch (e) {console.log(e);}
+		// try {
+			// var r = await this.run(query, params);
+			// if (r.errorState == 0) {
+				// return r.data.recordset;
+			// } else {
+				// console.log(r.error);
+				// throw new Error();
+			// }
+		// } catch (e) {console.log(e);}
+        return this.run(query, params).then(r=>{
+            if (r.errorState == 0) {
+                return r.data.recordset;
+            } else {
+                return Promise.reject(r.error);
+            }
+        });
 	}
 	queryCatch(
 		query,

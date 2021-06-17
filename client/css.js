@@ -46,18 +46,6 @@ function setCssEvents() {
         });
     };
     
-    /* context menu handler filter */
-    window.oncontextmenu = function(e) {
-        var nearest = $(e.target).filter('.use_menu')[0] || $(e.target).parents('.use_menu')[0];
-        if (nearest == null) {
-            return true;
-        } else {
-            var use_menu = nearest.getAttribute('use_menu');
-            if (use_menu in g.showMenu) g.showMenu[use_menu](e, nearest);
-            return false;
-        }
-    };
-    
     /* set WIP text */
     $('[class="#WIP"]').each(function(index){
         $(this).html('(WIP: ' + $(this).parent().attr('class') + ')');
