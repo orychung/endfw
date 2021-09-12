@@ -29,6 +29,7 @@ class connection {
                 this.defaultRequest = this.connection.request();
                 this.request = this.defaultRequest;
 				this.connected = true;
+                return true;
 			} catch (err) {
 				// ... error checks
 				console.log('catched on connect', err);
