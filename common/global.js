@@ -1,6 +1,6 @@
 var g = Object(); // global local information container
 
-function pass(anything) { return anything; };
+function pass() { return; };
 
 sequenceGenerator = function* (i = 1) {while (true) yield i++;};
 
