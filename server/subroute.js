@@ -10,7 +10,7 @@ class Subroute {
         this.middlewareLookup = {}; // name -> [#, mw]
         this.errorHandlers = [];    // element = mw
     }
-    register(mw, name, url, method) {
+    register(mw, name, url, method, stateFilter) {
         if (mw instanceof Function && mw.length > 3) {
             this.errorHandlers.push(mw);
         } else {
@@ -19,23 +19,26 @@ class Subroute {
                 mw: mw,
                 name: name,
                 url: url,
-                method: method
+                method: method,
+                stateFilter: stateFilter
             });
         }
         return this;
     }
-    use(mw, name)           {this.register(mw, name, null, null)}
-    all(url, mw, name)      {this.register(mw, name, url, null)}
-    get(url, mw, name)      {this.register(mw, name, url, 'GET')}
-    post(url, mw, name)     {this.register(mw, name, url, 'POST')}
-    put(url, mw, name)      {this.register(mw, name, url, 'PUT')}
-    delete(url, mw, name)   {this.register(mw, name, url, 'DELETE')}
+    use(mw, name)               {this.register(mw, name, null, null)}
+    useWith(mw, name, filter)   {this.register(mw, name, null, null, filter)}
+    all(url, mw, name)          {this.register(mw, name, url, null)}
+    get(url, mw, name)          {this.register(mw, name, url, 'GET')}
+    post(url, mw, name)         {this.register(mw, name, url, 'POST')}
+    put(url, mw, name)          {this.register(mw, name, url, 'PUT')}
+    delete(url, mw, name)       {this.register(mw, name, url, 'DELETE')}
     async jumpTo(nameArray) {
         // TODO_DESIGN: jump to a particular middleware path
     }
     async beginRoute(req, res, next) {
         try {
             var mwIndex = 0;
+            if (!req.subrouteStates) req.subrouteStates = {};
             while (mwIndex < this.middlewares.length) {
                 var mwDef = this.middlewares[mwIndex];
                 var skip = false;
@@ -53,12 +56,24 @@ class Subroute {
                         }
                     }
                 }
+                if (mwDef.stateFilter) {
+                    for (var key in mwDef.stateFilter) {
+                        if (mwDef.stateFilter[key] != req.subrouteStates[key]) {
+                            skip = true;
+                            break;
+                        }
+                    }
+                }
                 if (!skip) {
                     var nextCalled = triggerFactory();
                     var localNext = function next(err) {
                         if (err) nextCalled.cancel(err);
                         else nextCalled.fire();
                     }
+                    localNext.with = function (states) {
+                        Object.assign(req.subrouteStates, states);
+                        return localNext();
+                    };
                     nextCalled.promise.then(
                         () => {},
                         (err) => this.beginErrorRoute(err, req, res, next)

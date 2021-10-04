@@ -1,10 +1,11 @@
 
-function amp_encode(text) {
+function amp_encode(text, replaceBreaks=false) {
     if (!text) return text;
     var newText = text;
     newText = newText.replace(/&/g,'&amp;');
     newText = newText.replace(/</g,'&lt;');
     newText = newText.replace(/>/g,'&gt;');
+    if (replaceBreaks) newText = newText.replace(/\n/g,'<br/>');
     return newText;
 }
 
@@ -14,7 +15,7 @@ function html_tag(name, content='', attrs=[], opt={}) {
     var contentIndentStr = ''.padStart(opt.contentIndent || 0,' ');
     return [
         `<${name}${
-        attrs.map(x=>' '+x.name+'="'+x.value.replace(/"/g,'&quot;')+'"').join('')
+        attrs.map(x=>' '+x.name+'="'+(''+x.value).replace(/"/g,'&quot;')+'"').join('')
         }>`,
         useLineBreak?(contentIndentStr+content.replace(/\n/g,'\n'+contentIndentStr)):content,
         `</${name}>`
@@ -28,9 +29,9 @@ function html_table(data, opt={}) {
     var tableAttrs = opt.tableAttrs || [];
     var tdMapper = opt.tdMapper || (x=>x);
     var tdAttrsMapper = opt.tdAttrsMapper || (x=>[]);
-    var tdEscaper = opt.tdEscaper || (x=>x && amp_encode(x).replace(new RegExp('\n','g'),'<br/>'));
+    var tdEscaper = opt.tdEscaper || (x=>x && amp_encode(''+x).replace(new RegExp('\n','g'),'<br/>'));
     var thMapper = opt.thMapper || (x=>x);
-    var thEscaper = opt.thEscaper || (x=>x && amp_encode(x).replace(new RegExp('\n','g'),'<br/>'));
+    var thEscaper = opt.thEscaper || (x=>x && amp_encode(''+x).replace(new RegExp('\n','g'),'<br/>'));
     var trSuffix = opt.trSuffix || (x=>'');
     var cols = [];
     var attrs = [];
@@ -68,6 +69,7 @@ var now = Object();
 now.format = function (str){
     var true_now = new Date();
     var display_now = new Date(true_now.getTime() - (true_now.getTimezoneOffset() * 60000)).toISOString();
+    str = str.replace(':ms',display_now.substring(20,23));
     str = str.replace(':Y4',display_now.substring(0,4));
     str = str.replace(':Y2',display_now.substring(2,4));
     str = str.replace(':M',display_now.substring(5,7));

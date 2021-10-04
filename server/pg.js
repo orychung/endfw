@@ -24,6 +24,9 @@ class connection {
 		this.config = JSON.parse(JSON.stringify(defaultConfig));
 		for (var key in config) this.config[key] = config[key];
 	}
+    end() {
+        return this.connection.end();
+    }
 	async connect() {
 		if (this.connected == false || this.connection == null) {
 			try {
@@ -32,20 +35,13 @@ class connection {
                 this.defaultRequest = this.connection;
                 this.request = this.defaultRequest;
 				this.connected = true;
+                return true;
 			} catch (err) {
 				// ... error checks
 				console.log('catched on connect', err);
 			}
 		}
 	}
-    async ws_log(message, module='') {
-        if (!this.connected) await this.connect();
-        this.queryCatch(
-            'insert into web.ws_console_log (log_ts, service, log_info) '
-            +'values (now(), \'' + module + '\', \'' + message + '\');'
-            , (r) => {return;}
-        );
-    }
     async run(query, params) {
         if (!this.connected) await this.connect();
         if (params) params.forEach((x, i) => {

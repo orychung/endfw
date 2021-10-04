@@ -2,14 +2,16 @@
 const os = require('os');
 const fs = require('fs');
 const path = require('path');
+const mime = require('mime/lite');
 const WebSocketServer = require('websocket').server;
 const {g, pass, sequenceGenerator} = require('../common/global');
 
 class Server {
-    constructor(project, domain, port, options = {}) {
-        this.project = project;
-        this.domain = domain;
-        this.port = port;
+    constructor(options = {}) {
+        this.project = options.project || 'noProject';
+        this.domain = options.domain || 'localhost';
+        this.port = options.port || 443;
+        this.context = options.context || '';
         
         this.log = options.log || pass;
         this.peerDisposal = options.peerDisposal || pass;
@@ -23,12 +25,6 @@ class Server {
         var cookieParser = require('cookie-parser');
         var contentSecurityPolicy = require('helmet-csp');
         this.app = express();
-        var getRawBody = function(req, res, buf, encoding) {
-            // TODO: add unzip logic before this
-            req.rawBody = buf.toString(encoding || 'utf8');
-        }
-        this.app.use(express.json({ verify: getRawBody })); // for parsing application/json
-        this.app.use(express.urlencoded({ limit: '50MB', verify: getRawBody, extended: true })); // for parsing application/x-www-form-urlencoded
         this.app.use(cookieParser(this.cookieSecret));
         this.app.use(contentSecurityPolicy({directives: this.cspDirectives}));
     }
@@ -142,16 +138,7 @@ class Returner {
         // this.server.log('[200] return file: '+filePath);
 		if (mimeType == 'auto') {
 			var ext = filePath.split('.').slice(-1)[0].toLowerCase();
-			mimeType = {
-				'js': 'text/javascript',
-				'html': 'text/html',
-				'xml': 'text/xml',
-				'yaml': 'text/x-yaml',
-				'css': 'text/css',
-				'png': 'image/png',
-                'svg': 'image/svg+xml',
-				'json': 'application/json',
-			}[ext] || 'text/plain';
+			mimeType = mime.getType(ext) || 'text/plain';
 		}
         var resourcePath = this.server.checkResource(filePath, cbNotFound(this, filePath));
         if (resourcePath) {
@@ -262,16 +249,13 @@ class Peer {
 }
 
 function localIP() {
-/* naive local IP lookup to handle the simplest case that
- * only one interface is using the 255.255.255.0 mask */
     var ifaces = os.networkInterfaces();
-    var result
-    Object.keys(ifaces).forEach(function (key) {
-        ifaces[key].forEach(function (ip) {
-            if (ip.netmask == '255.255.255.0') result=ip.address;
-        });
-    });
-    return result;
+    return (
+        Object.keys(ifaces)
+        .flatMap(k=>ifaces[k])
+        .filter(x=>x.family == 'IPv4' && x.address != '127.0.0.1')
+        [0].address
+    );
 }
 
 // for being imported as node module
