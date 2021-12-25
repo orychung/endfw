@@ -2,7 +2,8 @@
 const os = require('os');
 const fs = require('fs');
 const path = require('path');
-const mime = require('mime/lite');
+const contentType = require('content-type');
+const mime = require('mime');
 const WebSocketServer = require('websocket').server;
 const {g, pass, sequenceGenerator} = require('../common/global');
 
@@ -17,6 +18,12 @@ class Server {
         this.peerDisposal = options.peerDisposal || pass;
         this.cookieSecret = options.cookieSecret || '<abc>this is the secret</abc>';
 		this.cspDirectives = options.cspDirectives || JSON.parse(JSON.stringify(Server.defaultCspDirectives));
+        this.fileInventories = {
+            default: {
+                paths: ['./proj/'+this.project, '.'],
+                regExp: null
+            }
+        };
         
         this.initApp();
     }
@@ -56,14 +63,17 @@ class Server {
         });
     }
     disposePeer(peer) {this.peerDisposal(peer);}
-	resourceList(filePath) {
-		return [
-            './proj/'+this.project+filePath,
-            '.'+filePath
-        ];
-	}
     checkResource(filePath, callback=pass) {
-        return this.resourceList(filePath).reduce((p, x) => (p || (fs.existsSync(x)?x:null)), null) || callback();
+        var inventoryName = 'default';
+        if (filePath instanceof Array) {
+            inventoryName = filePath[0];
+            filePath = filePath[1];
+        }
+        var inventory = this.fileInventories[inventoryName];
+        if (inventory.regExp) {
+            if (!inventory.regExp.test(filePath)) return callback('path_rejected');
+        }
+        return inventory.paths.reduce((p, x) => (p || (fs.existsSync(x+filePath)?(x+filePath):null)), null) || callback('path_not_found');
     }
     get url() {return 'https://'+this.domain+':'+this.port;}
     get httpUrl() {return 'http://'+this.domain+':'+this.port;}
@@ -75,14 +85,18 @@ Server.defaultCspDirectives = {
 	imgSrc: ["'self'", "data:"],
 	frameSrc: ["'self'"]
 };
-
-const cbNotFound = function(ret, filePath) {
-    return function() {
-        ret.server.log("not found: "+filePath);
+Server.extractContentType = function(req, res, next) {
+    req.contentType = req.headers['content-type'] && contentType.parse(req.headers['content-type']);
+    next();
+};
+Server.cbNotFound = function(ret, filePath) {
+    return function(e) {
+        ret.server.log(e+": "+filePath);
         ret.error(404);
         return null;
     }
 };
+
 class Returner {
     constructor(res, server) {
         this.res = res;
@@ -123,25 +137,25 @@ class Returner {
 		].join('');
 		return this;
 	}
-    download(filePath) {
+    download(filePath, fileName) {
         // this.server.log('[200] return download: '+filePath);
-        var resourcePath = this.server.checkResource(filePath, cbNotFound(this, filePath));
+        var resourcePath = this.server.checkResource(filePath, Server.cbNotFound(this, filePath));
         if (resourcePath) {
             this.closeHead(200, {
                 "Content-Type": "application/octet-stream",
-                "Content-Disposition" : "attachment; filename=" + path.basename(resourcePath)
+                "Content-Disposition" : "attachment; filename=" + (fileName || path.basename(resourcePath))
             });
             fs.createReadStream(resourcePath).pipe(this.res);
         }
     }
     file(filePath, mimeType='auto', standalone=false) {
         // this.server.log('[200] return file: '+filePath);
-		if (mimeType == 'auto') {
-			var ext = filePath.split('.').slice(-1)[0].toLowerCase();
-			mimeType = mime.getType(ext) || 'text/plain';
-		}
-        var resourcePath = this.server.checkResource(filePath, cbNotFound(this, filePath));
+        var resourcePath = this.server.checkResource(filePath, Server.cbNotFound(this, filePath));
         if (resourcePath) {
+            if (mimeType == 'auto') {
+                var ext = resourcePath.split('.').slice(-1)[0].toLowerCase();
+                mimeType = mime.getType(ext) || 'text/plain';
+            }
             if (!mimeType.startsWith('text/')) {
                 this.closeHead(200, {'Content-Type': mimeType});
                 fs.createReadStream(resourcePath).pipe(this.res);
@@ -159,7 +173,7 @@ class Returner {
                     matches.forEach(x=>{
                         var name = x.replace(re, '$1');
                         if (name.startsWith('/css/')) name = '/../js'+name;
-                        var cssPath = this.server.checkResource(name, cbNotFound(this, name));
+                        var cssPath = this.server.checkResource(name, Server.cbNotFound(this, name));
                         if (!cssPath) return;
                         var cssContent = fs.readFileSync(cssPath).toString();
                         html = html.split(x).join('  <style type="text/css">'+cssContent+'</style>');
@@ -170,7 +184,7 @@ class Returner {
                     matches.forEach(x=>{
                         var name = x.replace(re, '$1');
                         if (name.startsWith('/js/')) name = '/..'+name;
-                        var jsPath = this.server.checkResource(name, cbNotFound(this, name));
+                        var jsPath = this.server.checkResource(name, Server.cbNotFound(this, name));
                         if (!jsPath) return;
                         var jsContent = fs.readFileSync(jsPath).toString();
                         html = html.split(x).join('  <script type="text/javascript">'+jsContent+'</script>');
