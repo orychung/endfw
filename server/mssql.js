@@ -1,4 +1,4 @@
-
+"use strict";
 const sql = require('mssql');
 var defaultConfig = {
     user: 'node',
@@ -6,6 +6,11 @@ var defaultConfig = {
     server: 'localhost', // You can use 'localhost\\instance' to connect to named instance
     database: 'NODE',
     port: 1433,
+    pool: {
+        max: 10,
+        min: 0,
+        idleTimeoutMillis: 30000
+    },
     options: {
         enableArithAbort: true,
     }
@@ -15,6 +20,42 @@ const singleQuoteRE = new RegExp(/'/g);
 function quoteEsc(text) {
     if (!text) return text;
     return text.replace(singleQuoteRE, "''");
+}
+class Pool extends sql.ConnectionPool{
+	constructor (config = {}) {
+		// this.connected = false;
+		var newConfig = JSON.parse(JSON.stringify(defaultConfig));
+		for (var key in config) newConfig[key] = config[key];
+        super(newConfig);
+        this.config = newConfig;
+	}
+    newTransaction() {
+        return new Transaction(this);
+    }
+    async runRows(...args) {
+        return (await this.query(...args)).recordset;
+    }
+}
+class Transaction {
+    constructor (poolOrConn) {
+        this.poolOrConn = poolOrConn;
+        this._transaction = new sql.Transaction(poolOrConn);
+        this.ready = new Promise((s,f)=>{
+            this._transaction.begin(s);
+        });
+    }
+    commit() {
+        return this._transaction.commit();
+    }
+    rollback() {
+        return this._transaction.rollback();
+    }
+    query(...args) {
+        return (new sql.Request(this._transaction)).query(...args);
+    }
+    async runRows(...args) {
+        return (await this.query(...args)).recordset;
+    }
 }
 class connection {
 	constructor (config = {}) {
@@ -53,7 +94,7 @@ class connection {
 		try {return {data: await this.request.query(query), errorState: 0};}
 		catch (e) {return {error: e, errorState: 1};}
 	}
-	async runRows(query, params) {
+	runRows(query, params) {
 		// try {
 			// var r = await this.run(query, params);
 			// if (r.errorState == 0) {
@@ -132,6 +173,8 @@ if (typeof module === 'undefined') {
 		sql: sql,
 		defaultConfig: defaultConfig,
 		connection: connection,
+        Pool: Pool,
+        Transaction: Transaction,
         quoteEsc: quoteEsc
     }
 }
