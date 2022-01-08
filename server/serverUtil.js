@@ -1,6 +1,8 @@
 const secureRandom = require('secure-random');
+const fetch = require('node-fetch');
 
 var exports = {};
+exports.fetch = fetch;
 exports.randBuffer = function randBuffer(byteLength) {
     return secureRandom(byteLength, {type: 'Buffer'});
 }
