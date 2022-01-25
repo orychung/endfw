@@ -13,6 +13,10 @@ Object.defineProperty(Array.prototype, 'done', addMethod(async function done() {
     for (var i=0;i<out.length;i++) {out[i] = await this[i];}
     return out;
 }));
+Object.defineProperty(Object.prototype, 'lookupOf', addMethod(function lookupOf(key, f=v=>v) {
+    if (!key) throw '[lookupOf]: key (parameter 0) must be specified!';
+    return this.mapKeyValue((k,v)=>v[key],v=>f(v));
+}));
 Object.defineProperty(Array.prototype, 'sortBy', addMethod(function sortBy(f, desc=false) {
     var d = desc?[1,-1]:[-1,1];
     this.sort((x1,x2) => ((x,y) => (y>x)?d[0]:(x>y)?d[1]:0)(f(x1), f(x2)));
@@ -162,6 +166,7 @@ JSON.listify = function(objBody, objName, index) {
 // documentation about what is done
 var builtin_doc = {
     Array: {
+        lookupOf: "form a key > value map",
         sortBy: "sort by value of single-param function",
         shuffle: "reorder items randomly"
     },
