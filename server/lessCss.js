@@ -2,6 +2,7 @@
 const less = require('less');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const {Returner} = require('./server');
 
 function cssToLess(cssPath) {
@@ -19,6 +20,10 @@ function convertFilePath(filePath) {
     }
     return [inventoryName, cssToLess(filePath)];
 }
+function hashSha256(content, format) {
+    var hash = crypto.createHash('sha256');
+    return hash.update(content).digest(format)
+};
 async function makeCacheReady(lessPath) {
     if (!(lessPath in compiledCache)) {
         var lessBody = fs.readFileSync(lessPath).toString();
@@ -26,20 +31,31 @@ async function makeCacheReady(lessPath) {
             filename: path.resolve(lessPath),
             modifyVars: lessCss.modifyVars
         })).css;
+        compiledCacheETag[lessPath] = '"'+hashSha256(compiledCache[lessPath], 'base64')+'"';
+        console.log(lessPath, compiledCacheETag[lessPath]);
     }
+}
+async function makeResponse(returner, path, errorCallback) {
+    try {
+        var lessPath = returner.server.checkResource(convertFilePath(path), errorCallback);
+        if (!lessPath) return;
+        await makeCacheReady(lessPath);
+        if (lessCss.useETag) {
+            var tag = returner.req.headers['if-none-match'];
+            if (tag && tag == compiledCacheETag[lessPath]) return returner.success(null,304);
+            returner.setHead({ETag: compiledCacheETag[lessPath]});
+        }
+        return returner.success(compiledCache[lessPath],200,'text/css');
+    } catch (e) {console.error(e);}
 }
 
 // for use as Returner method
-Returner.prototype.less = async function (filePath) {
-    try {
-        var lessPath = this.server.checkResource(convertFilePath(filePath), e=>this.file(filePath));
-        if (!lessPath) return;
-        await makeCacheReady(lessPath);
-        return this.success(compiledCache[lessPath],200,'text/css');
-    } catch (e) {console.error(e);}
+Returner.prototype.less = function (filePath) {
+    return makeResponse(this, filePath, e=>this.file(filePath));
 };
 
 compiledCache = {};
+compiledCacheETag = {};
 
 // for use as Router factory
 function lessCss(server, pathFromReq) {
@@ -52,18 +68,21 @@ function lessCss(server, pathFromReq) {
                     "expected context": lessCss.contextPath
                 });
             }
-            var lessPath = server.checkResource(convertFilePath(cssPath), e=>next());
-            if (!lessPath) return;
-            await makeCacheReady(lessPath);
-            return res.returner.success(compiledCache[lessPath],200,'text/css');
+            return makeResponse(res.returner, cssPath, e=>next());
+            // var lessPath = server.checkResource(convertFilePath(cssPath), e=>next());
+            // if (!lessPath) return;
+            // await makeCacheReady(lessPath);
+            // return res.returner.success(compiledCache[lessPath],200,'text/css');
         } catch (e) {console.error(e);}
     };
 }
 
 lessCss.modifyVars = {};
 lessCss.contextPath = '/css';
+lessCss.useETag = false;
 lessCss.clearCache = function() {
     compiledCache = {};
+    compiledCacheETag = {};
 };
 
 // for being imported as node module
