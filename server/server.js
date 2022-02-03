@@ -6,6 +6,7 @@ const contentType = require('content-type');
 const mime = require('mime');
 const WebSocketServer = require('websocket').server;
 const {g, pass, sequenceGenerator} = require('../common/global');
+const {fetch} = require('../server/serverUtil.js');
 
 class Server {
     constructor(options = {}) {
@@ -49,6 +50,10 @@ class Server {
         var https = require('https');
         this.httpsServer = https.createServer(httpsOptions, this.app);
         this.httpsServer.listen(this.port, this.domain, () => this.log('Server running at '+this.url));
+        
+        this.selfAgent = new https.Agent({
+            rejectUnauthorized: false,
+        });
     }
     initWS() {
         this.ws = new WebSocketServer({
@@ -148,7 +153,7 @@ class Returner {
             fs.createReadStream(resourcePath).pipe(this.res);
         }
     }
-    file(filePath, mimeType='auto', standalone=false) {
+    async file(filePath, mimeType='auto', standalone=false) {
         // this.server.log('[200] return file: '+filePath);
         var resourcePath = this.server.checkResource(filePath, Server.cbNotFound(this, filePath));
         if (resourcePath) {
@@ -163,32 +168,40 @@ class Returner {
             }
             try {
                 var html = fs.readFileSync(resourcePath).toString();
-                for (var key in this.variableAssignment) {
-                    html = html.split(this.variablePlaceholder(key)).join(this.variableAssignment[key]);
-                }
                 if (standalone) {
                 // perform content substitution to make the page standalone
                     var re = new RegExp('  <link rel="stylesheet" type="text/css" href="[.][.]([^"]+)" />', 'g');
                     var matches = html.match(re);
-                    matches.forEach(x=>{
-                        var name = x.replace(re, '$1');
-                        if (name.startsWith('/css/')) name = '/../js'+name;
-                        var cssPath = this.server.checkResource(name, Server.cbNotFound(this, name));
-                        if (!cssPath) return;
-                        var cssContent = fs.readFileSync(cssPath).toString();
+                    await matches.map(async x=>{
+                        var name = x.replace(re, '$1').replace('/[[buildHash]]/','/');
+                        var cssContent = await (await fetch(this.server.url+name, {
+                            agent: this.server.selfAgent
+                        })).text();
                         html = html.split(x).join('  <style type="text/css">'+cssContent+'</style>');
-                    });
+                    }).done();
                     
                     var re = new RegExp('  <script type="text/javascript" src="[.][.]([^"]+)"></script>', 'g');
                     var matches = html.match(re);
-                    matches.forEach(x=>{
-                        var name = x.replace(re, '$1');
-                        if (name.startsWith('/js/')) name = '/..'+name;
-                        var jsPath = this.server.checkResource(name, Server.cbNotFound(this, name));
-                        if (!jsPath) return;
-                        var jsContent = fs.readFileSync(jsPath).toString();
+                    await matches.map(async x=>{
+                        var name = x.replace(re, '$1').replace('/[[buildHash]]/','/');
+                        var jsContent = await (await fetch(this.server.url+name, {
+                            agent: this.server.selfAgent
+                        })).text();
                         html = html.split(x).join('  <script type="text/javascript">'+jsContent+'</script>');
-                    });
+                    }).done();
+                    
+                    var re = new RegExp(`await http.get[(]'[.][.]([^']+)'[)]`, 'g');
+                    var matches = html.match(re);
+                    await matches.map(async x=>{
+                        var name = x.replace(re, '$1').replace('/[[buildHash]]/','/');
+                        var xmlContent = await (await fetch(this.server.url+name, {
+                            agent: this.server.selfAgent
+                        })).text();
+                        html = html.split(x).join('`'+xmlContent+'`');
+                    }).done();
+                }
+                for (var key in this.variableAssignment) {
+                    html = html.split(this.variablePlaceholder(key)).join(this.variableAssignment[key]);
                 }
             } catch (err) {
                 this.server.log("error loading file: "+resourcePath);
