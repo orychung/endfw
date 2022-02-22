@@ -6,8 +6,33 @@ const contentType = require('content-type');
 const mime = require('mime');
 const WebSocketServer = require('websocket').server;
 const {g, pass, sequenceGenerator} = require('../common/global');
+const {fetch} = require('../server/serverUtil.js');
 
 class Server {
+    static compileCspHeader(directives) {
+        var fields = Object.keys(directives).map(i=>{
+            var category = {
+                defaultSrc: 'default-src',
+                baseUri: 'base-uri',
+                blockAllMixedContent: 'block-all-mixed-content',
+                fontSrc: 'font-src',
+                frameAncestors: 'frame-ancestors',
+                frameSrc: 'frame-src',
+                imgSrc: 'img-src',
+                objectSrc: 'object-src',
+                scriptSrc: 'script-src',
+                scriptSrcAttr: 'script-src-attr',
+                styleSrc: 'style-src',
+                upgradeInsecureRequests: 'upgrade-insecure-requests',
+            }[i];
+            if (!category) throw `Directive ${i} is not supported`;
+            var values = directives[i];
+            if (!(values instanceof Array)) values = [values];
+            return [category].concat(values).join(' ');
+        })
+        return fields.join(';');
+    }
+    cspHeaderSets = {}
     constructor(options = {}) {
         this.project = options.project || 'noProject';
         this.domain = options.domain || 'localhost';
@@ -17,7 +42,9 @@ class Server {
         this.log = options.log || pass;
         this.peerDisposal = options.peerDisposal || pass;
         this.cookieSecret = options.cookieSecret || '<abc>this is the secret</abc>';
-		this.cspDirectives = options.cspDirectives || JSON.parse(JSON.stringify(Server.defaultCspDirectives));
+        this.cspHeaderSets.default = Server.compileCspHeader(
+            options.cspDirectives
+            || JSON.serialCopy(Server.defaultCspDirectives));
         this.fileInventories = {
             default: {
                 paths: ['./proj/'+this.project, '.'],
@@ -30,10 +57,8 @@ class Server {
     initApp() {
         var express = require('express');
         var cookieParser = require('cookie-parser');
-        var contentSecurityPolicy = require('helmet-csp');
         this.app = express();
         this.app.use(cookieParser(this.cookieSecret));
-        this.app.use(contentSecurityPolicy({directives: this.cspDirectives}));
     }
     startHTTP(options = {}) {
         var http = require('http');
@@ -49,6 +74,10 @@ class Server {
         var https = require('https');
         this.httpsServer = https.createServer(httpsOptions, this.app);
         this.httpsServer.listen(this.port, this.domain, () => this.log('Server running at '+this.url));
+        
+        this.selfAgent = new https.Agent({
+            rejectUnauthorized: false,
+        });
     }
     initWS() {
         this.ws = new WebSocketServer({
@@ -80,8 +109,8 @@ class Server {
 }
 Server.defaultCspDirectives = {
 	defaultSrc: ["'self'"],
-	scriptSrc: ["'self'", "'unsafe-inline'"],
-	styleSrc: ["'self'", "'unsafe-inline'"],
+	scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+	styleSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
 	imgSrc: ["'self'", "data:"],
 	frameSrc: ["'self'"]
 };
@@ -126,6 +155,10 @@ class Returner {
 		this.headClosed = true;
         return this;
 	}
+    setCsp(index="default") {
+        this.setHead({'Content-Security-Policy': this.server.cspHeaderSets[index]});
+        return this;
+    }
     setHead(header) {
 		Object.assign(this.addHeader, header);
         return this;
@@ -148,7 +181,7 @@ class Returner {
             fs.createReadStream(resourcePath).pipe(this.res);
         }
     }
-    file(filePath, mimeType='auto', standalone=false) {
+    async file(filePath, mimeType='auto', standalone=false) {
         // this.server.log('[200] return file: '+filePath);
         var resourcePath = this.server.checkResource(filePath, Server.cbNotFound(this, filePath));
         if (resourcePath) {
@@ -163,32 +196,40 @@ class Returner {
             }
             try {
                 var html = fs.readFileSync(resourcePath).toString();
-                for (var key in this.variableAssignment) {
-                    html = html.split(this.variablePlaceholder(key)).join(this.variableAssignment[key]);
-                }
                 if (standalone) {
                 // perform content substitution to make the page standalone
                     var re = new RegExp('  <link rel="stylesheet" type="text/css" href="[.][.]([^"]+)" />', 'g');
                     var matches = html.match(re);
-                    matches.forEach(x=>{
-                        var name = x.replace(re, '$1');
-                        if (name.startsWith('/css/')) name = '/../js'+name;
-                        var cssPath = this.server.checkResource(name, Server.cbNotFound(this, name));
-                        if (!cssPath) return;
-                        var cssContent = fs.readFileSync(cssPath).toString();
+                    await matches.map(async x=>{
+                        var name = x.replace(re, '$1').replace('/[[buildHash]]/','/');
+                        var cssContent = await (await fetch(this.server.url+name, {
+                            agent: this.server.selfAgent
+                        })).text();
                         html = html.split(x).join('  <style type="text/css">'+cssContent+'</style>');
-                    });
+                    }).done();
                     
                     var re = new RegExp('  <script type="text/javascript" src="[.][.]([^"]+)"></script>', 'g');
                     var matches = html.match(re);
-                    matches.forEach(x=>{
-                        var name = x.replace(re, '$1');
-                        if (name.startsWith('/js/')) name = '/..'+name;
-                        var jsPath = this.server.checkResource(name, Server.cbNotFound(this, name));
-                        if (!jsPath) return;
-                        var jsContent = fs.readFileSync(jsPath).toString();
+                    await matches.map(async x=>{
+                        var name = x.replace(re, '$1').replace('/[[buildHash]]/','/');
+                        var jsContent = await (await fetch(this.server.url+name, {
+                            agent: this.server.selfAgent
+                        })).text();
                         html = html.split(x).join('  <script type="text/javascript">'+jsContent+'</script>');
-                    });
+                    }).done();
+                    
+                    var re = new RegExp(`await http.get[(]'[.][.]([^']+)'[)]`, 'g');
+                    var matches = html.match(re);
+                    await matches.map(async x=>{
+                        var name = x.replace(re, '$1').replace('/[[buildHash]]/','/');
+                        var xmlContent = await (await fetch(this.server.url+name, {
+                            agent: this.server.selfAgent
+                        })).text();
+                        html = html.split(x).join('`'+xmlContent+'`');
+                    }).done();
+                }
+                for (var key in this.variableAssignment) {
+                    html = html.split(this.variablePlaceholder(key)).join(this.variableAssignment[key]);
                 }
             } catch (err) {
                 this.server.log("error loading file: "+resourcePath);
@@ -204,13 +245,13 @@ class Returner {
         this.closeHead(code, {'Content-Type': 'text/html'});
         this.res.end(data);
     }
-	xmlError(code, message, data) {this.error(code, message, data, 'text/xml;charset=UTF-8');}
+	xmlError(code, message, data) {this.error(code, message, data, 'text/xml');}
 	success(data='', code=200, mimeType='text/html') {
         this.closeHead(code, {'Content-Type': mimeType});
 		this.res.end(data);
 	}
     html(data='', code=200) {this.success(data, code, 'text/html');}
-	xml(data='', code=200) {this.success(data, code, 'text/xml;charset=UTF-8');}
+	xml(data='', code=200) {this.success(data, code, 'text/xml');}
     get jsonMsg() {
         return new Proxy(this, {get: function(x, name) {
             return () => x.jsonError(
