@@ -163,6 +163,38 @@ JSON.listify = function(objBody, objName, index) {
     }
 }
 
+Proxy.quitFallback = Symbol();
+Proxy.nullFallback = function(value) {
+    return new Proxy({value: value}, {
+        ownKeys(target, ...args) {
+            if (target.value instanceof Object)
+                return Reflect.ownKeys(target.value, ...args);
+            return [];
+        },
+        getOwnPropertyDescriptor(target, ...args) {
+            if (target.value instanceof Object)
+                return Reflect.getOwnPropertyDescriptor(target.value, ...args);
+            return {};
+        },
+        get(target, prop, receiver) {
+            if (prop===Proxy.quitFallback) return target.value;
+            if (prop===Symbol.toPrimitive) {
+                if (target.value instanceof Object) return target.value[prop];
+                return (hint)=>target.value;
+            }
+            if (target.value instanceof Object)
+                return Proxy.nullFallback(Reflect.get(target.value, prop, receiver));
+            if (target.value===null) return receiver;
+            return Proxy.nullFallback(null);
+        },
+        set(target, prop, value, receiver) {
+            if (target.value instanceof Object)
+                return Reflect.set(target.value, prop, receiver);
+            return null;
+        }
+    });
+}
+
 // documentation about what is done
 var builtin_doc = {
     Array: {
@@ -199,6 +231,9 @@ var builtin_doc = {
     JSON: {
         serialCopy: "copy object by stringify and parse",
         listify: "output JSON as a list",
+    },
+    Proxy: {
+        nullFallback: "reading from nulls returns nulls",
     }
 }
 
