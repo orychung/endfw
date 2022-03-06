@@ -87,7 +87,7 @@ class pmf {
     empiricalTest(size=1000000) {
         var data = this.base.mapObject(x=>0);
         for (var i=0;i<size;i++) data[this.sample()] += 1;
-        return data;
+        return new pmf(data);
     }
     normalize() {
         delete this.unsortedCDF;
