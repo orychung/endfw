@@ -165,7 +165,12 @@ JSON.listify = function(objBody, objName, index) {
 
 Proxy.quitFallback = Symbol();
 Proxy.nullFallback = function(value) {
-    return new Proxy({value: value}, {
+    return new Proxy(Object.assign(()=>{},{value: value}), {
+        apply(target, ...args) {
+            if (target.value instanceof Function)
+                return target.value.apply(...args);
+            return Proxy.nullFallback(null);
+        },
         ownKeys(target, ...args) {
             if (target.value instanceof Object)
                 return Reflect.ownKeys(target.value, ...args);
