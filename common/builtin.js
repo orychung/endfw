@@ -166,9 +166,9 @@ JSON.listify = function(objBody, objName, index) {
 Proxy.quitFallback = Symbol();
 Proxy.nullFallback = function(value) {
     return new Proxy(Object.assign(()=>{},{value: value}), {
-        apply(target, ...args) {
+        apply(target, thisArg, args) {
             if (target.value instanceof Function)
-                return target.value.apply(...args);
+                return Proxy.nullFallback(target.value(...args));
             return Proxy.nullFallback(null);
         },
         ownKeys(target, ...args) {
@@ -187,14 +187,22 @@ Proxy.nullFallback = function(value) {
                 if (target.value instanceof Object) return target.value[prop];
                 return (hint)=>target.value;
             }
-            if (target.value instanceof Object)
-                return Proxy.nullFallback(Reflect.get(target.value, prop, receiver));
             if (target.value===null) return receiver;
-            return Proxy.nullFallback(null);
+            
+            var value;
+            if (target.value instanceof Object) {
+                value = target.value[prop];
+            } else if ((target.value!=null) && prop in target.value.__proto__) {
+                value = target.value[prop];
+            } else {
+                value = null;
+            }
+            if (value instanceof Function) value = value.bind(target.value);
+            return Proxy.nullFallback(value);
         },
         set(target, prop, value, receiver) {
             if (target.value instanceof Object)
-                return Reflect.set(target.value, prop, receiver);
+                return target.value[prop] = value;
             return null;
         }
     });
