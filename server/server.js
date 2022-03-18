@@ -15,6 +15,7 @@ class Server {
                 defaultSrc: 'default-src',
                 baseUri: 'base-uri',
                 blockAllMixedContent: 'block-all-mixed-content',
+                connectSrc: 'connect-src',
                 fontSrc: 'font-src',
                 frameAncestors: 'frame-ancestors',
                 frameSrc: 'frame-src',
