@@ -66,11 +66,62 @@ class perfCounter {
     }
 }
 
+class ThroughputMeter {
+    tpm = 0
+    status = 'stopped'
+    constructor(data={}) {
+        Object.assign(this, data);
+    }
+    async customExecute() { // to be overridden
+        return await this.execute();
+    }
+    async execute() {
+        var call_ms = performance.now();
+        var ret = await this.fire();
+        var done_ms = performance.now();
+        var used_ms = done_ms - call_ms;
+        this.doneCount += 1;
+        this.totalTime += used_ms;
+        this.maxTime = Math.max(this.maxTime, used_ms);
+        this.lastDoneTime = done_ms;
+    }
+    async fire() { // to be overridden
+        console.warn('[ThroughputMeter] fire() called without being defined');
+    }
+    start() {
+        if (this.repeater) return;
+        if (!(this.tpm > 0)) return;
+        this.doneCount = 0;
+        this.totalTime = 0;
+        this.maxTime = 0;
+        this.lastDoneTime = NaN;
+        this.startTime = performance.now();
+        this.repeater = setInterval(()=>this.customExecute(), 60000/this.tpm);
+        this.status = 'running';
+    }
+    stop() {
+        if (this.repeater) {
+            clearInterval(this.repeater);
+            delete this.repeater;
+        }
+        this.status = 'stopped';
+    }
+    get actualTpm() {
+        if (!(this.doneCount > 0)) return 0;
+        return 60000*this.doneCount/(this.lastDoneTime-60000/this.tpm-this.startTime)
+    }
+    get averageMs() {
+        if (!(this.doneCount > 0)) return 0;
+        return x.totalTime/x.doneCount
+    }
+}
+
 // for being imported as node module
 if (typeof module === 'undefined') {
     // skip if not running node
 } else {
     module.exports = {
-        perfCounter: perfCounter
+        perfCounter: perfCounter,
+        ThroughputMeter: ThroughputMeter,
     }
 }
