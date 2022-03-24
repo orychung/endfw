@@ -243,7 +243,7 @@ class Returner {
     }
     error(code=400, message, data=null, mimeType='text/html') {
         this.server.log('['+code+'] '+message);
-        this.closeHead(code, {'Content-Type': 'text/html'});
+        this.closeHead(code, {'Content-Type': mimeType});
         this.res.end(data);
     }
 	xmlError(code, message, data) {this.error(code, message, data, 'text/xml');}
