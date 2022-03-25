@@ -32,7 +32,6 @@ async function makeCacheReady(lessPath) {
             modifyVars: lessCss.modifyVars
         })).css;
         compiledCacheETag[lessPath] = '"'+hashSha256(compiledCache[lessPath], 'base64')+'"';
-        console.log(lessPath, compiledCacheETag[lessPath]);
     }
 }
 async function makeResponse(returner, path, errorCallback) {
