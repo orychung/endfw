@@ -107,6 +107,13 @@ var browse = {
         var query = {};
         (new URL(document.URL)).searchParams.forEach((x,i)=>query[i] = x);
         return query;
+    },
+    updateQuery: function(query) {
+        window.history.pushState(
+            query,
+            "", // unused param
+            document.URL.split('?')[0]+'?'+new URLSearchParams(query).toString()
+        );
     }
 };
 
