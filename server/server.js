@@ -226,6 +226,9 @@ class Returner {
                         var xmlContent = await (await fetch(this.server.url+name, {
                             agent: this.server.selfAgent
                         })).text();
+                        xmlContent = xmlContent
+                            .split('$').join('\\$')
+                            .split('`').join('\\`');
                         html = html.split(x).join('`'+xmlContent+'`');
                     }).done();
                 }
@@ -243,7 +246,7 @@ class Returner {
     }
     error(code=400, message, data=null, mimeType='text/html') {
         this.server.log('['+code+'] '+message);
-        this.closeHead(code, {'Content-Type': mimeType});
+        this.closeHead(code, {'Content-Type': 'text/html'});
         this.res.end(data);
     }
 	xmlError(code, message, data) {this.error(code, message, data, 'text/xml');}
