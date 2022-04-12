@@ -114,6 +114,25 @@ var browse = {
             "", // unused param
             document.URL.split('?')[0]+'?'+new URLSearchParams(query).toString()
         );
+    },
+    file: {
+        async _get(method, ...args) {
+            let reader = new FileReader();
+            let readData = triggerFactory();
+            reader.onload = (e) => readData.fire(e.target.result);
+            reader[method](...args);
+            await readData.promise;
+            return readData.result;
+        },
+        async arrayBuffer(...args) {return this._get('readAsArrayBuffer', ...args)},
+        async binaryString(...args) {return this._get('readAsBinaryString', ...args)},
+        async dataURL(...args) {return this._get('readAsDataURL', ...args)},
+        async text(...args) {return this._get('readAsText', ...args)},
+        async base64(...args) {
+            let result = await this._get('readAsDataURL', ...args);
+            var startIndex = result.indexOf(';base64,')+8;
+            return result.slice(startIndex);
+        },
     }
 };
 
