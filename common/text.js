@@ -82,12 +82,12 @@ now.format = function (str){
 now.t01 = function (){return now.format('[:h:m:s] ')};
 now.t02 = function (){return now.format('[:Y4:M:DT:h:m:s] ')};
 
-class param_text {
+class ParamText {
     constructor(template, defaults = {}) {
         this.template = template;
         this.defaults = defaults;
         this.defaultOrder = [];
-        for (var param in this.defaults) {this.defaultOrder.push(param)};
+        for (var key in this.defaults) {this.defaultOrder.push(key)};
         this.resetAllParams();
     };
     setTemplate(template) {
@@ -96,36 +96,39 @@ class param_text {
     }
     resetAllParams() {
         this.params = {};
-        for (var param in this.defaults) {this.params[param] = this.defaults[param]};
+        for (var key in this.defaults) {this.params[key] = this.defaults[key]};
         return this;
     };
-    resetParam(param) {
-        delete this.params[param];
-        if (param in this.defaults) {this.params[param] = this.defaults[param];}
+    resetParam(key) {
+        delete this.params[key];
+        if (key in this.defaults) {this.params[key] = this.defaults[key];}
         return this;
     };
-    setParam(param, value) {
-        this.params[param] = value;
+    setParam(key, value) {
+        this.params[key] = value;
         return this;
     };
     setParams(params) {
-        for (var i in params) this.params[i] = params[i];
+        for (var key in params) this.params[key] = params[key];
         return this;
     };
-    evalParam(param, value) {
+    evalParam(key, value) {
         var remain_recur = 100;
         while (typeof(value) == 'function') {
-            value = value(this.params, param);
+            value = value(this.params, key);
             remain_recur = remain_recur - 1;
-            if (remain_recur <= 0) break;
+            if (remain_recur <= 0) {
+                console.error('evalParam recursion limit of 100 exceeded')
+                break;
+            }
         }
         return value;
     };
-    fixParam(param, value = ((ps,p) => ps[p])) {
+    fixParam(key, value = ((ps,p) => ps[p])) {
     // fixParam will actualize the final param value from potential functions
     // (if needed, provide option to eliminate the param instead of actualizing it)
-        this.params[param] = this.evalParam(param, value);
-        this.template = this.template.split('[['+param+']]').join(this.params[param])
+        this.params[key] = this.evalParam(key, value);
+        this.template = this.template.split('[['+key+']]').join(this.params[key])
         return this;
     };
     finalise(template = this.template) {
@@ -139,28 +142,29 @@ class param_text {
         // KIV: below is a more featured version, but affected by completeness of copy and may be worse in performance
         var workingCopy = this.copy();
         workingCopy.template = template;
-        this.defaultOrder.forEach((p) => {workingCopy.fixParam(p);});
-        for (var p in workingCopy.params) {workingCopy.fixParam(p);};
+        this.defaultOrder.forEach(key => {workingCopy.fixParam(key);});
+        for (var key in workingCopy.params) {workingCopy.fixParam(key);};
         return workingCopy.template;
     };
     get v() {return this.finalise();};
     toString() {return this.v;};
     // Create new instance
     copy() {
-        var newCopy = new param_text(this.template);
-        for (var param in this.defaults) {newCopy.defaults[param] = this.defaults[param]};
+        var newCopy = new ParamText(this.template);
+        newCopy.defaults = Object.assign({}, this.defaults);
         newCopy.defaultOrder = Array.from(this.defaultOrder);
-        for (var param in this.params) {newCopy.params[param] = this.params[param]};
+        newCopy.params = Object.assign({}, this.params);
         return newCopy;
     };
     static parse(content, defaults = {}) {
-        if (content instanceof param_text) {
+        if (content instanceof ParamText) {
             return content;
         } else {
-            return (new param_text(content, defaults));
+            return (new ParamText(content, defaults));
         }
     };
 }
+const param_text = ParamText;
 
 // for being imported as node module
 if (typeof module === 'undefined') {
@@ -170,7 +174,7 @@ if (typeof module === 'undefined') {
         amp_encode: amp_encode,
         html_tag: html_tag,
         html_table: html_table,
-        param_text: param_text,
-        now: now
+        now: now,
+        ParamText: ParamText,
     };
 }
