@@ -201,7 +201,7 @@ class Returner {
                 // perform content substitution to make the page standalone
                     var re = new RegExp('  <link rel="stylesheet" type="text/css" href="[.][.]([^"]+)" />', 'g');
                     var matches = html.match(re);
-                    await matches.map(async x=>{
+                    matches && await matches.map(async x=>{
                         var name = x.replace(re, '$1').replace('/[[buildHash]]/','/');
                         var cssContent = await (await fetch(this.server.url+name, {
                             agent: this.server.selfAgent
@@ -211,7 +211,7 @@ class Returner {
                     
                     var re = new RegExp('  <script type="text/javascript" src="[.][.]([^"]+)"></script>', 'g');
                     var matches = html.match(re);
-                    await matches.map(async x=>{
+                    matches && await matches.map(async x=>{
                         var name = x.replace(re, '$1').replace('/[[buildHash]]/','/');
                         var jsContent = await (await fetch(this.server.url+name, {
                             agent: this.server.selfAgent
@@ -221,7 +221,7 @@ class Returner {
                     
                     var re = new RegExp(`await http.get[(]'[.][.]([^']+)'[)]`, 'g');
                     var matches = html.match(re);
-                    await matches.map(async x=>{
+                    matches && await matches.map(async x=>{
                         var name = x.replace(re, '$1').replace('/[[buildHash]]/','/');
                         var xmlContent = await (await fetch(this.server.url+name, {
                             agent: this.server.selfAgent
@@ -236,7 +236,7 @@ class Returner {
                     html = html.split(this.variablePlaceholder(key)).join(this.variableAssignment[key]);
                 }
             } catch (err) {
-                this.server.log("error loading file: "+resourcePath);
+                this.server.log("[Returner.file] error loading file: "+resourcePath);
                 this.server.log(err);
                 return this.error(500);
             }
