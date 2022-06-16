@@ -1,25 +1,40 @@
-
-const octave4 = [
+const RAMP_SHARP_GAP = 0.005;
+const ZERO_GAIN_PAD = 0.0001;
+const OCTAVE4 = [
     ['C', 261.6255653005986],
-    ['Db', 277.1826309768721],
+    ['D♭', 277.1826309768721],
     ['D', 293.6647679174076],
-    ['Eb', 311.12698372208087],
+    ['E♭', 311.12698372208087],
     ['E', 329.6275569128699],
     ['F', 349.2282314330039],
-    ['Gb', 369.99442271163446],
+    ['G♭', 369.99442271163446],
     ['G', 391.99543598174927],
-    ['Ab', 415.3046975799451],
+    ['A♭', 415.3046975799451],
     ['A', 440],
-    ['Bb', 466.1637615180899],
+    ['B♭', 466.1637615180899],
     ['B', 493.8833012561241]
 ];
 class Music {
     static notes = [
-        ...octave4.map(x=>Object({name: x[0]+'2', frequency: x[1]*(2**-2)})),
-        ...octave4.map(x=>Object({name: x[0]+'3', frequency: x[1]*(2**-1)})),
-        ...octave4.map(x=>Object({name: x[0]+'4', frequency: x[1]*(2**0)})),
-        ...octave4.map(x=>Object({name: x[0]+'5', frequency: x[1]*(2**1)})),
-        ...octave4.map(x=>Object({name: x[0]+'6', frequency: x[1]*(2**2)})),
+        ...OCTAVE4.map(x=>Object({name: x[0]+'2', frequency: x[1]*(2**-2)})),
+        ...OCTAVE4.map(x=>Object({name: x[0]+'3', frequency: x[1]*(2**-1)})),
+        ...OCTAVE4.map(x=>Object({name: x[0]+'4', frequency: x[1]*(2**0)})),
+        ...OCTAVE4.map(x=>Object({name: x[0]+'5', frequency: x[1]*(2**1)})),
+        ...OCTAVE4.map(x=>Object({name: x[0]+'6', frequency: x[1]*(2**2)})),
+    ]
+    static keySignatures = [
+        {majorName: "C Major", minorName: "A Minor", doNote: 0, missingNotes: "1,3,6,8,10"},
+        {majorName: "D♭ Major", minorName: "B♭ Minor", doNote: 1, missingNotes: "2,4,7,9,11"},
+        {majorName: "D Major", minorName: "B Minor", doNote: 2, missingNotes: "0,3,5,8,10"},
+        {majorName: "E♭ Major", minorName: "C Minor", doNote: 3, missingNotes: "1,4,6,9,11"},
+        {majorName: "E Major", minorName: "D♭ Minor", doNote: 4, missingNotes: "0,2,5,7,10"},
+        {majorName: "F Major", minorName: "D Minor", doNote: 5, missingNotes: "1,3,6,8,11"},
+        {majorName: "G♭ Major", minorName: "E♭ Minor", doNote: 6, missingNotes: "0,2,4,7,9"},
+        {majorName: "G Major", minorName: "E Minor", doNote: 7, missingNotes: "1,3,5,8,10"},
+        {majorName: "A♭ Major", minorName: "F Minor", doNote: 8, missingNotes: "2,4,6,9,11"},
+        {majorName: "A Major", minorName: "G♭ Minor", doNote: 9, missingNotes: "0,3,5,7,10"},
+        {majorName: "B♭ Major", minorName: "G Minor", doNote: 10, missingNotes: "1,4,6,8,11"},
+        {majorName: "B Major", minorName: "A♭ Minor", doNote: 11, missingNotes: "0,2,5,7,9"},
     ]
 }
 
@@ -43,29 +58,30 @@ class MusicalInstrument {
         });
         this.notePlayers = {};
         this.gain = ctx.createGain();
-        this.gain.gain.setValueAtTime(this.options.gain, ctx.currentTime);
+        this.gain.gain.exponentialRampToValueAtTime(this.options.gain+ZERO_GAIN_PAD, ctx.currentTime+RAMP_SHARP_GAP);
         this.gain.connect(options.destination || ctx.destination);
     }
     setGainAtTime(value, time=this.ctx.currentTime) {
-        this.gain.gain.setValueAtTime(value, time);
+        this.gain.gain.exponentialRampToValueAtTime(value+ZERO_GAIN_PAD, time+RAMP_SHARP_GAP);
+    }
+    setNoteStrengthAtTime(i, dB, time) {
+        let dBTruncate = -99;
+        if ((dB > dBTruncate) && !(i in this.notePlayers)) {
+            this.notePlayers[i] = new MusicalNote(this.ctx, {
+                destination: this.gain,
+                frequency: this.options.notes[i].frequency,
+                gain: 0,
+                wave: this.options.wave,
+                type: this.options.type,
+            });
+            this.notePlayers[i].start();
+        }
+        if (!(i in this.notePlayers)) return;
+        if (dB < dBTruncate) dB = -99;
+        this.notePlayers[i].setGainAtTime((dB+100)/100, time);
     }
     setSpectrumAtTime(spectrum, time=this.ctx.currentTime) {
-        spectrum.forEach((dB,i)=>{
-            let dBTruncate = -80;
-            if ((dB > dBTruncate) && !(i in this.notePlayers)) {
-                this.notePlayers[i] = new MusicalNote(this.ctx, {
-                    destination: this.gain,
-                    frequency: this.options.notes[i].frequency,
-                    gain: 0,
-                    wave: this.options.wave,
-                    type: this.options.type,
-                });
-                this.notePlayers[i].start();
-            }
-            if (!(i in this.notePlayers)) return;
-            if (dB < dBTruncate) dB = -100;
-            this.notePlayers[i].setGainAtTime((dB+100)/100, time);
-        });
+        spectrum.forEach((dB,i)=>this.setNoteStrengthAtTime(i, dB, time));
     }
 }
 
@@ -89,11 +105,11 @@ class MusicalNote {
             }
         });
         this.gain = ctx.createGain();
-        this.gain.gain.setValueAtTime(this.options.gain, ctx.currentTime);
-        this.gain.connect(options.destination || ctx.destination);
+        this.gain.gain.exponentialRampToValueAtTime(this.options.gain+ZERO_GAIN_PAD, ctx.currentTime+RAMP_SHARP_GAP);
+        // this.gain.connect(options.destination || ctx.destination);
     }
     setGainAtTime(value, time=this.ctx.currentTime) {
-        this.gain.gain.setValueAtTime(value, time);
+        this.gain.gain.exponentialRampToValueAtTime(value+ZERO_GAIN_PAD, time+RAMP_SHARP_GAP);
     }
     start() {
         this.stop();
@@ -104,6 +120,7 @@ class MusicalNote {
             this.osc.type = this.options.type;
         };
         this.osc.frequency.setValueAtTime(this.options.frequency, this.ctx.currentTime);
+        this.osc.connect(this.gain);
         this.unmute();
         this.osc.start();
     }
@@ -113,11 +130,11 @@ class MusicalNote {
         delete this.osc;
     }
     mute() {
-        this.osc.disconnect();
+        this.gain.disconnect();
         this.muted = true;
     }
     unmute() {
-        this.osc.connect(this.gain);
+        this.gain.connect(this.options.destination || this.ctx.destination);
         this.muted = false;
     }
 }
