@@ -21,6 +21,7 @@ class Music {
         ...OCTAVE4.map(x=>Object({name: x[0]+'4', frequency: x[1]*(2**0)})),
         ...OCTAVE4.map(x=>Object({name: x[0]+'5', frequency: x[1]*(2**1)})),
         ...OCTAVE4.map(x=>Object({name: x[0]+'6', frequency: x[1]*(2**2)})),
+        ...OCTAVE4.map(x=>Object({name: x[0]+'7', frequency: x[1]*(2**3)})),
     ]
     static keySignatures = [
         {majorName: "C Major", minorName: "A Minor", doNote: 0, missingNotes: "1,3,6,8,10"},
@@ -38,9 +39,10 @@ class Music {
     ]
 }
 
-class MusicalInstrument {
+class MusicalItem {
     static defaults = {
         gain: 0.2,
+        frequency: 440,
         type: 'sine',
         notes: Music.notes,
     }
@@ -50,25 +52,72 @@ class MusicalInstrument {
         this.options = new Proxy(this, {
             get(target, prop, receiver) {
                 if (prop in target._options) return target._options[prop];
-                return MusicalInstrument.defaults[prop];
+                return MusicalNote.defaults[prop];
             },
             set(target, prop, value, receiver) {
                 return target._options[prop] = value;
             }
         });
-        this.notePlayers = {};
         this.gain = ctx.createGain();
         this.gain.gain.exponentialRampToValueAtTime(this.options.gain+ZERO_GAIN_PAD, ctx.currentTime+RAMP_SHARP_GAP);
-        this.gain.connect(options.destination || ctx.destination);
+        this.analyser = this.gain;
+    }
+    useAnalyser(options={}) {
+        if (this.analyser != this.gain) this.analyser.disconnect();
+        this.analyser = this.ctx.createAnalyser();
+        Object.assign(this.analyser, options);
+        this.analyser.connect(this.gain);
     }
     setGainAtTime(value, time=this.ctx.currentTime) {
         this.gain.gain.exponentialRampToValueAtTime(value+ZERO_GAIN_PAD, time+RAMP_SHARP_GAP);
+    }
+    mute() {
+        this.gain.disconnect();
+        this.muted = true;
+    }
+    unmute() {
+        this.gain.connect(this.options.destination || this.ctx.destination);
+        this.muted = false;
+    }
+}
+
+class MusicalNote extends MusicalItem {
+    // todo: support note overtones
+    constructor(ctx, options={}) {
+        super(ctx, options);
+    }
+    start() {
+        this.stop();
+        this.osc = this.ctx.createOscillator();
+        if (this.options.wave) {
+            this.osc.setPeriodicWave(this.options.wave);
+        } else {
+            this.osc.type = this.options.type;
+        };
+        this.osc.frequency.setValueAtTime(this.options.frequency, this.ctx.currentTime);
+        this.osc.connect(this.analyser);
+        this.unmute();
+        this.osc.start();
+    }
+    stop() {
+        if (!this.osc) return;
+        this.osc.stop();
+        delete this.osc;
+    }
+}
+
+class MusicalInstrument extends MusicalItem {
+    constructor(ctx, options={}) {
+        super(ctx, options);
+        
+        this.notePlayers = {};
+        this.unmute();
     }
     setNoteStrengthAtTime(i, dB, time) {
         let dBTruncate = -99;
         if ((dB > dBTruncate) && !(i in this.notePlayers)) {
             this.notePlayers[i] = new MusicalNote(this.ctx, {
-                destination: this.gain,
+                destination: this.analyser,
                 frequency: this.options.notes[i].frequency,
                 gain: 0,
                 wave: this.options.wave,
@@ -85,56 +134,27 @@ class MusicalInstrument {
     }
 }
 
-class MusicalNote {
-    static defaults = {
-        gain: 0.2,
-        frequency: 440,
-        type: 'sine',
-    }
-    // todo: support note overtones
+class MusicalBuffer extends MusicalItem {
     constructor(ctx, options={}) {
-        this.ctx = ctx;
-        this._options = options;
-        this.options = new Proxy(this, {
-            get(target, prop, receiver) {
-                if (prop in target._options) return target._options[prop];
-                return MusicalNote.defaults[prop];
-            },
-            set(target, prop, value, receiver) {
-                return target._options[prop] = value;
-            }
-        });
-        this.gain = ctx.createGain();
-        this.gain.gain.exponentialRampToValueAtTime(this.options.gain+ZERO_GAIN_PAD, ctx.currentTime+RAMP_SHARP_GAP);
-        // this.gain.connect(options.destination || ctx.destination);
+        super(ctx, options);
     }
-    setGainAtTime(value, time=this.ctx.currentTime) {
-        this.gain.gain.exponentialRampToValueAtTime(value+ZERO_GAIN_PAD, time+RAMP_SHARP_GAP);
+    removeBuffer() {
+        if (!this.buffer) return;
+        this.buffer.disconnect();
+        delete this.buffer;
+        if (this.intervalIndex) clearInterval(this.intervalIndex);
+    }
+    async loadFile(file) {
+        this.buffer = this.ctx.createBufferSource();
+        this.buffer.buffer = (await this.ctx.decodeAudioData((await file.arrayBuffer())));
+        this.buffer.connect(this.analyser);
     }
     start() {
-        this.stop();
-        this.osc = this.ctx.createOscillator();
-        if (this.options.wave) {
-            this.osc.setPeriodicWave(this.options.wave);
-        } else {
-            this.osc.type = this.options.type;
-        };
-        this.osc.frequency.setValueAtTime(this.options.frequency, this.ctx.currentTime);
-        this.osc.connect(this.gain);
         this.unmute();
-        this.osc.start();
+        this.buffer.start();
     }
-    stop() {
-        if (!this.osc) return;
-        this.osc.stop();
-        delete this.osc;
-    }
-    mute() {
-        this.gain.disconnect();
-        this.muted = true;
-    }
-    unmute() {
-        this.gain.connect(this.options.destination || this.ctx.destination);
-        this.muted = false;
+    setInterval(f, interval) {
+        this.intervalIndex = setInterval(()=>f.call(this), interval);
+        return this.intervalIndex;
     }
 }
