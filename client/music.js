@@ -127,7 +127,7 @@ class MusicalInstrument extends MusicalItem {
         }
         if (!(i in this.notePlayers)) return;
         if (dB < dBTruncate) dB = -99;
-        this.notePlayers[i].setGainAtTime((dB+100)/100, time);
+        this.notePlayers[i].setGainAtTime((dB+99)/100, time);
     }
     setSpectrumAtTime(spectrum, time=this.ctx.currentTime) {
         spectrum.forEach((dB,i)=>this.setNoteStrengthAtTime(i, dB, time));
@@ -135,23 +135,52 @@ class MusicalInstrument extends MusicalItem {
 }
 
 class MusicalBuffer extends MusicalItem {
+    bufferEventListeners = []
     constructor(ctx, options={}) {
         super(ctx, options);
     }
+    addEventListener(type, listener) {
+        this.bufferEventListeners.push({type, listener});
+        this.buffer.addEventListener(type, listener);
+    }
+    removeAllEventListenersFromBuffer() {
+        this.bufferEventListeners.forEach(x=>this.buffer.addEventListener(x.type, x.listener));
+    }
+    removeAllEventListeners() {
+        this.removeAllEventListenersFromBuffer();
+        this.bufferEventListeners = [];
+    }
     removeBuffer() {
         if (!this.buffer) return;
+        this.removeAllEventListenersFromBuffer();
         this.buffer.disconnect();
         delete this.buffer;
         if (this.intervalIndex) clearInterval(this.intervalIndex);
     }
     async loadFile(file) {
+        this.removeBuffer();
         this.buffer = this.ctx.createBufferSource();
         this.buffer.buffer = (await this.ctx.decodeAudioData((await file.arrayBuffer())));
         this.buffer.connect(this.analyser);
     }
-    start() {
+    restart(when, offset, duration) {
+        if (offset < 0) offset += this.buffer.buffer.duration;
+        if (offset > this.buffer.buffer.duration || offset < 0) {
+            console.error('duration specified is outside the available range of the buffer');
+            return;
+        }
+        let reuseBuffer = this.buffer.buffer;
+        this.removeAllEventListenersFromBuffer();
+        this.buffer.disconnect();
+        this.buffer = this.ctx.createBufferSource();
+        this.buffer.buffer = reuseBuffer;
+        this.bufferEventListeners.forEach(x=>this.buffer.addEventListener(x.type, x.listener));
+        this.buffer.connect(this.analyser);
+        this.start(when, offset, duration);
+    }
+    start(when, offset, duration) {
         this.unmute();
-        this.buffer.start();
+        this.buffer.start(when, offset, duration);
     }
     setInterval(f, interval) {
         this.intervalIndex = setInterval(()=>f.call(this), interval);
