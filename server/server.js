@@ -209,7 +209,7 @@ class Returner {
                         html = html.split(x).join('  <style type="text/css">'+cssContent+'</style>');
                     }).done();
                     
-                    var re = new RegExp('  <script type="text/javascript" src="[.][.]([^"]+)"></script>', 'g');
+                    var re = new RegExp('  <script type="text/javascript" src="[.][.]([^"]+)"( charset="utf-8")?></script>', 'g');
                     var matches = html.match(re);
                     matches && await matches.map(async x=>{
                         var name = x.replace(re, '$1').replace('/[[buildHash]]/','/');
