@@ -7,6 +7,12 @@ function addMethod(f) {
     };
 }
 
+// early availability
+if (!Array.prototype.at) Object.defineProperty(Array.prototype, 'at', addMethod(function at(index) {
+    if (index < 0) index += this.length;
+    return this[index];
+}));
+
 // custom
 Object.defineProperty(Array.prototype, 'done', addMethod(async function done() {
     var out = this.constructor(this.length);
@@ -211,6 +217,7 @@ Proxy.nullFallback = function(value) {
 // documentation about what is done
 var builtin_doc = {
     Array: {
+        at: "early availability for ES 2022",
         lookupOf: "form a key > value map",
         sortBy: "sort by value of single-param function",
         shuffle: "reorder items randomly"
