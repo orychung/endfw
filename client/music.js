@@ -37,11 +37,15 @@ class Music {
         {majorName: "B♭ Major", minorName: "G Minor", doNote: 10, missingNotes: "1,4,6,8,11"},
         {majorName: "B Major", minorName: "A♭ Minor", doNote: 11, missingNotes: "0,2,5,7,9"},
     ]
+    static timeDisplay(time) {
+        let date = new Date(time * 1000);
+        return date.getMinutes()+':'+date.getSeconds().toString().padStart(2,'0');
+    }
 }
 
 class MusicalItem {
     static defaults = {
-        gain: 0.2,
+        gain: 0.3,
         frequency: 440,
         type: 'sine',
         notes: Music.notes,
@@ -155,13 +159,20 @@ class MusicalBuffer extends MusicalItem {
         this.removeAllEventListenersFromBuffer();
         this.buffer.disconnect();
         delete this.buffer;
-        if (this.intervalIndex) clearInterval(this.intervalIndex);
+        delete this.filename;
     }
     async loadFile(file) {
         this.removeBuffer();
         this.buffer = this.ctx.createBufferSource();
         this.buffer.buffer = (await this.ctx.decodeAudioData((await file.arrayBuffer())));
         this.buffer.connect(this.analyser);
+        this.filename = file.name;
+    }
+    async loadNextFile(file) {
+        this.removeAllEventListenersFromBuffer();
+        this.loadFile(file);
+        this.bufferEventListeners.forEach(x=>this.buffer.addEventListener(x.type, x.listener));
+        this.start();
     }
     restart(when, offset, duration) {
         if (offset < 0) offset += this.buffer.buffer.duration;
@@ -181,9 +192,16 @@ class MusicalBuffer extends MusicalItem {
     start(when, offset, duration) {
         this.unmute();
         this.buffer.start(when, offset, duration);
+        this.ctxOffset = Math.max(when || 0, this.ctx.currentTime) - (offset || 0);
     }
     setInterval(f, interval) {
         this.intervalIndex = setInterval(()=>f.call(this), interval);
         return this.intervalIndex;
+    }
+    clearInterval() {
+        if (this.intervalIndex) clearInterval(this.intervalIndex);
+    }
+    get playbackTime() {
+        return this.ctx.currentTime - this.ctxOffset;
     }
 }
