@@ -90,6 +90,14 @@ class MusicalNote extends MusicalItem {
     constructor(ctx, options={}) {
         super(ctx, options);
     }
+    set type(value) {
+        this.osc && (this.osc.type = value);
+        this.options.type = value;
+    }
+    set wave(value) {
+        this.osc && this.osc.setPeriodicWave(value);
+        this.options.wave = value;
+    }
     start() {
         this.stop();
         this.osc = this.ctx.createOscillator();
@@ -116,6 +124,16 @@ class MusicalInstrument extends MusicalItem {
         
         this.notePlayers = {};
         this.unmute();
+    }
+    get type() {return this.options.type;}
+    set type(value) {
+        this.notePlayers.mapArray(x=>{x.type = value;});
+        this.options.type = value;
+    }
+    get wave() {return this.options.wave;}
+    set wave(value) {
+        this.notePlayers.mapArray(x=>{x.wave = value;});
+        this.options.wave = value;
     }
     setNoteStrengthAtTime(i, dB, time) {
         let dBTruncate = -99;
@@ -200,6 +218,7 @@ class MusicalBuffer extends MusicalItem {
     }
     clearInterval() {
         if (this.intervalIndex) clearInterval(this.intervalIndex);
+        delete this.intervalIndex;
     }
     get playbackTime() {
         return this.ctx.currentTime - this.ctxOffset;
