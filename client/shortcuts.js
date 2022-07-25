@@ -100,7 +100,7 @@ var browse = {
     download: function(data, filename) {
         var a1 = document.createElement('a');
         a1.href=URL.createObjectURL(new Blob([data]));
-        a1.download=filename
+        a1.download = filename;
         a1.click();
     },
     currentQuery: function() {
@@ -118,11 +118,11 @@ var browse = {
     file: {
         async _get(method, ...args) {
             let reader = new FileReader();
-            let readData = triggerFactory();
-            reader.onload = (e) => readData.fire(e.target.result);
+            let resolve;
+            let readData = new Promise(r=>{resolve=r});
+            reader.onload = (e) => resolve(e.target.result);
             reader[method](...args);
-            await readData.promise;
-            return readData.result;
+            return readData;
         },
         async arrayBuffer(...args) {return this._get('readAsArrayBuffer', ...args)},
         async binaryString(...args) {return this._get('readAsBinaryString', ...args)},

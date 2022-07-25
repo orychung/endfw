@@ -1,7 +1,7 @@
 // must include text.js
 
 // useful templates
-bannerTemplate = new param_text(`
+bannerTemplate = new ParamText(`
 <g class="banner">
     <rect x="[[rect_x]]" y="[[rect_y]]" width="[[width]]" height="[[height]]" rx="[[rx]]" ry="[[ry]]" fill="[[fill]]" stroke="[[stroke]]" stroke-width="[[stroke-width]]"/>
     <text x="0" y="[[text_y]]" font-size="[[font-size]]" text-anchor="[[text-anchor]]">[[text]]</text>
@@ -18,7 +18,7 @@ bannerTemplate = new param_text(`
     "text_y":(p) => (p['font-size'] / 4),
     "ry":(p) => p['rx']
 });
-buttonTemplate = new param_text(`
+buttonTemplate = new ParamText(`
 <style type="text/css">
     #[[id]] text {text-anchor: middle; user-select:none;}
     .button {color: white;}
@@ -69,7 +69,7 @@ svg_gen.checkPattern = function(newId, color, rotate=0, scale=1, hOpacity=0.25, 
     .replace('[[vOpacity]]',vOpacity);
 };
 
-class svg_x extends param_text {
+class svg_x extends ParamText {
     constructor(id, format = {}, style = {}, action = []) {
         super('',{});
         this.id = id; // id to be used in svg element to be attached
@@ -117,7 +117,7 @@ class svg_x extends param_text {
         this.width = format.width || 200;
         this.height = format.height || 200;
         // for use as external SVG, declare namespace as: xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-        this.layout = new param_text(format.layout || `
+        this.layout = new ParamText(format.layout || `
         <svg id="[[id]]" viewBox="[[viewBox]]" class="[[class]]" width="[[width]]" height="[[height]]">
             <style type="text/css">#[[id]] [[style]]</style>
             [[header]]
@@ -135,8 +135,8 @@ class svg_x extends param_text {
                 act.anchors.forEach(function(anc){
                     var rep = {
                         "find": anc[0],
-                        "template": param_text.parse(anc[1]),
-                        "replaceAs": param_text.parse(anc[1]),
+                        "template": ParamText.parse(anc[1]),
+                        "replaceAs": ParamText.parse(anc[1]),
                         "working": ""
                     };
                     act.layers.reverse().forEach(function(lay){
@@ -147,7 +147,7 @@ class svg_x extends param_text {
                             };
                             rep.working = rep.working + working.v;
                         },this);
-                        rep.replaceAs = new param_text(rep.working);
+                        rep.replaceAs = new ParamText(rep.working);
                         rep.working = "";
                     },this);
                     this.actionReplacer.push(rep);
@@ -161,7 +161,7 @@ class svg_x extends param_text {
     // Dynamic content updates
     setText(text) {this.text = text;return this.updateHTML();}
     setContent(content) {
-        if (content instanceof param_text) {
+        if (content instanceof ParamText) {
             var newCopy = content.copy();
             this.template = newCopy.template;
             this.defaults = newCopy.defaults;

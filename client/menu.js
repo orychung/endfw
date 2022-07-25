@@ -38,7 +38,7 @@ g.menu.oncontextmenu = function(e) {
 };
 window.oncontextmenu = g.menu.oncontextmenu;
 
-class menu extends param_text {
+class menu extends ParamText {
     constructor(id) {
         super('<menu id="[[id]]" tabindex="-1" onfocusout="hideMe(this);"></menu>',
         {
