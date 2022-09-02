@@ -103,6 +103,14 @@ var browse = {
         a1.download = filename;
         a1.click();
     },
+    downloadDataURL: function(dataURL, filename) {
+        let base64Index = dataURL.slice(0, 60).indexOf('base64,');
+        if (base64Index == -1) throw 'data URL not in base64!';
+        let a1 = document.createElement('a');
+        a1.href = 'data:image/octet-stream;' + dataURL.slice(base64Index);
+        a1.download = filename;
+        a1.click();
+    },
     currentQuery: function() {
         var query = {};
         (new URL(document.URL)).searchParams.forEach((x,i)=>query[i] = x);
@@ -130,7 +138,7 @@ var browse = {
         async text(...args) {return this._get('readAsText', ...args)},
         async base64(...args) {
             let result = await this._get('readAsDataURL', ...args);
-            var startIndex = result.indexOf(';base64,')+8;
+            let startIndex = result.indexOf(';base64,')+8;
             return result.slice(startIndex);
         },
     }
