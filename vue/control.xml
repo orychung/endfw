@@ -1,0 +1,23 @@
+<vueTemplates>
+  <group id="sliders">
+    <vueTemplate id="t-range-slider">
+      <combo type="range_slider">
+        <div class="slider">
+          <input type="range" min="0" max="1" value="1" class="outer-bar"></input>
+          <input type="range" min="0" max="1" value="1" class="inner-bar"
+            :style="{
+              left: 'calc(100% * '+(od.min-cfg.min)/(cfg.max-cfg.min)+')',
+              width: 'calc(100% * '+(od.max-od.min)/(cfg.max-cfg.min)+')'
+            }"></input>
+          <input type="range" :min="cfg.min" :max="cfg.max" v-model="od.max" class="max"></input>
+          <input type="range" :min="cfg.min" :max="od.mid" v-model="od.min" class="min"
+            :style="{
+              width: 'calc(100% * '+(od.mid-cfg.min)/(cfg.max-cfg.min)+')'
+            }"></input>
+        </div>
+        <input type="text" class="min" v-model="od.min"></input>
+        <input type="text" class="max" v-model="od.max"></input>
+      </combo>
+    </vueTemplate>
+  </group>
+</vueTemplates>
