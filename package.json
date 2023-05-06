@@ -1,5 +1,8 @@
 {
   "main": "index.js",
+  "scripts": {
+    "prepare": "npm run build",
+  },
   "dependencies": {
       
   },
