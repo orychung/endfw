@@ -1,8 +1,12 @@
 {
   "main": "index.js",
+  "files": [
+    "LICENSE",
+    "index.js",
+    "server/"
+  ],
   "scripts": {
-    "prepare": "npm run build",
-    "build": "webpack index.js dist/index.js"
+    
   },
   "dependencies": {
     
