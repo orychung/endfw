@@ -1,0 +1,31 @@
+{
+  "main": "index.js",
+  "files": [
+    "LICENSE",
+    "index.js",
+    "server/",
+    "common/",
+    "math/"
+  ],
+  "scripts": {},
+  "devDependencies": {},
+  "name": "endfw",
+  "version": "0.1.0",
+  "description": "The End Framework, a node.js framework by theend",
+  "directories": {
+    "lib": "lib"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/orychung/endfw.git"
+  },
+  "keywords": [
+    "endfw"
+  ],
+  "author": "COY",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/orychung/endfw/issues"
+  },
+  "homepage": "https://github.com/orychung/endfw#readme"
+}
