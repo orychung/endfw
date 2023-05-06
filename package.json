@@ -5,13 +5,25 @@
     "index.js",
     "server/"
   ],
-  "scripts": {
-    
+  "scripts": {},
+  "devDependencies": {},
+  "name": "endfw",
+  "version": "0.1.0",
+  "description": "The End Framework, a node.js framework by theend",
+  "directories": {
+    "lib": "lib"
   },
-  "dependencies": {
-    
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/orychung/endfw.git"
   },
-  "devDependencies": {
-    
-  }
+  "keywords": [
+    "endfw"
+  ],
+  "author": "COY",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/orychung/endfw/issues"
+  },
+  "homepage": "https://github.com/orychung/endfw#readme"
 }
