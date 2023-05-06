@@ -3,7 +3,9 @@
   "files": [
     "LICENSE",
     "index.js",
-    "server/"
+    "server/",
+    "common/",
+    "math/"
   ],
   "scripts": {},
   "devDependencies": {},
