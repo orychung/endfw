@@ -1,3 +1,4 @@
+"use strict";
 
 const UrlPattern = require('url-pattern');
 const triggerFactory = require('../common/promise').triggerFactory;

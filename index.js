@@ -10,6 +10,7 @@ if (typeof module === 'undefined') {
     server: require('./server/server'),
     serverUtil: require('./server/serverUtil'),
     subroute: require('./server/subroute'),
+    ingest: require('./server/ingest'),
     
     builtin: require('./common/builtin'),
     dbBuiltin: require('./common/dbBuiltin'),
