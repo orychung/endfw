@@ -1,5 +1,7 @@
 "use strict";
 
+const {Returner} = require('../server/server.js');
+
 let ingestRequest = {
   parsedUrl_p: (server)=>(async function ingestRequest(req, res, next) {
     res.returner = new Returner(res, server);
