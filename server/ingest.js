@@ -33,6 +33,27 @@ let logRequest = {
   }
 }
 
+let authFree = {
+  cache_path_inventory: (options)=>(async function authFree(req, res, next) {
+    var ret = res.returner;
+    var url = req.parsedUrl;
+    if (url.seg(0) in options.versionedResourceMap) {
+      var match = options.versionedResourceMap[url.seg(0)];
+      if (options.versionPattern.test(url.seg(1))) {
+        ret.setCache(86400*match[0]);
+        return ret.file([match[2], match[1] + url.remainingPath(2)]);
+      }
+      return ret.file([match[2], match[1] + url.remainingPath(1)]);
+    } else if (url.seg(0) in options.resourceMap) {
+      var match = options.resourceMap[url.seg(0)];
+      if (match[0] != 0) ret.setCache(86400*match[0]);
+      return ret.file([match[2], match[1] + url.remainingPath(1)]);
+    } else {
+      next();
+    }
+  })
+}
+
 // for being imported as node module
 if (typeof module === 'undefined') {
   // skip if not running node
@@ -40,5 +61,6 @@ if (typeof module === 'undefined') {
   module.exports = {
     ingestRequest,
     logRequest,
+    authFree,
   }
 }
