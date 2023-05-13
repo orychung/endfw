@@ -1,0 +1,16 @@
+contextmenu {
+  position: absolute;
+  display: block;
+  box-shadow: 2px 2px 4px rgba(100,100,100,.7);
+  background: white;
+  border-radius: 12px;
+  padding: 4px;
+}
+contextmenu-button {
+  display: block;
+  border-radius: 8px;
+  padding: 3px 12px;
+}
+contextmenu-button:hover {
+  background: hsl(var(--theme-face-hue),30%,90%);
+}
