@@ -6,8 +6,8 @@
           left: menu.x+'px',
           top: menu.y+'px',
         }">
-        <contextmenu-button v-for="button in menu.buttons">
-          <span @click="button.click.apply(menu.view); w.splice(i,1);">{{ button.text }}</span>
+        <contextmenu-button v-for="button in menu.buttons" @click="button.click.apply(menu.view); w.splice(i,1);">
+          <span>{{ button.text }}</span>
         </contextmenu-button>
       </contextmenu>
     </vueTemplate>
