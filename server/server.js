@@ -179,7 +179,7 @@ class Returner {
     if (resourcePath) {
       this.closeHead(200, {
         "Content-Type": "application/octet-stream",
-        "Content-Disposition" : "attachment; filename=" + (fileName || path.basename(resourcePath))
+        "Content-Disposition" : "attachment; filename=" + encodeURIComponent(fileName || path.basename(resourcePath))
       });
       fs.createReadStream(resourcePath).pipe(this.res);
     }
