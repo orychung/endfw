@@ -10,6 +10,7 @@ contextmenu-button {
   display: block;
   border-radius: 8px;
   padding: 3px 12px;
+  cursor: pointer;
 }
 contextmenu-button:hover {
   background: hsl(var(--theme-face-hue),30%,90%);
