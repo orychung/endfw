@@ -6,7 +6,7 @@
           left: menu.x+'px',
           top: menu.y+'px',
         }">
-        <contextmenu-button v-for="button in menu.buttons.filter(b=>(b.visible==undefined)||b.visible())"
+        <contextmenu-button v-for="button in menu.buttons.filter(b=>(b.visible==undefined)||b.visible.apply(menu.od))"
           @click="button.click.apply(menu.od); w.splice(i,1);">
           <span>{{ button.text }}</span>
         </contextmenu-button>
