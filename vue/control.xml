@@ -13,6 +13,20 @@
       </contextmenu>
     </vueTemplate>
   </group>
+  <group id="grid">
+    <vueTemplate id="t-list-grid">
+      <grid-layout :class="od.class">
+        <grid-heading>
+          <box v-for="c in od.columns">{{ c.heading }}</box>
+        </grid-heading>
+        <grid-row v-for="d,i in od.data">
+          <box v-for="c in od.columns" :class="c.class"
+            @click="c.onclick && c.onclick.call($.ctx,d)"
+            >{{ c.display.call($.ctx,d) }}</box>
+        </grid-row>
+      </grid-layout>
+    </vueTemplate>
+  </group>
   <group id="sliders">
     <vueTemplate id="t-range-slider">
       <combo type="range_slider">

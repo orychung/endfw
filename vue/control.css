@@ -15,3 +15,21 @@ contextmenu-button {
 contextmenu-button:hover {
   background: hsl(var(--theme-face-hue),30%,90%);
 }
+grid-layout {
+  display: grid;
+  /* grid-auto-columns: auto; */
+  /* grid-auto-rows: auto; */
+  /* auto fails since it allows auto-wrap */
+  grid-template-columns: repeat(50, auto);
+  grid-template-rows: repeat(50, auto);
+}
+grid-row {
+  display: contents;
+}
+grid-heading {
+  display: contents;
+  font-weight: bold;
+}
+grid-row > :first-child, grid-heading > :first-child {
+  grid-column-start: 1;
+}
