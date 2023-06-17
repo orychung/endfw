@@ -17,12 +17,15 @@
     <vueTemplate id="t-list-grid">
       <grid-layout :class="od.class">
         <grid-heading>
-          <box v-for="c in od.columns">{{ c.heading }}</box>
+          <box v-for="c in od.columns" @click="od.column$click?.(c)">
+            <span>{{ c.heading }}</span>
+            <span v-if="od.sorting.column===c">&nbsp;({{ od.sorting.desc?'desc':'asc' }})</span>
+          </box>
         </grid-heading>
         <grid-row v-for="d,i in od.data">
           <box v-for="c in od.columns" :class="c.class"
-            @click="c.onclick && c.onclick.call($.ctx,d)"
-            >{{ c.display.call($.ctx,d) }}</box>
+            @click="c.onclick?.(d)"
+            >{{ c.display(d) }}</box>
         </grid-row>
       </grid-layout>
     </vueTemplate>
