@@ -1,4 +1,35 @@
 <vueTemplates>
+  <group id="contextmenu">
+    <vueTemplate id="t-contextmenu">
+      <contextmenu v-for="(menu,i) in w" v-focus tabindex="-1" @focusout="w.splice(i,1);"
+        :style="{
+          left: menu.x+'px',
+          top: menu.y+'px',
+        }">
+        <contextmenu-button v-for="button in menu.buttons.filter(b=>(b.visible==undefined)||b.visible.apply(menu.od))"
+          @click="button.click.apply(menu.od); w.splice(i,1);">
+          <span>{{ button.text }}</span>
+        </contextmenu-button>
+      </contextmenu>
+    </vueTemplate>
+  </group>
+  <group id="grid">
+    <vueTemplate id="t-list-grid">
+      <grid-layout :class="od.class">
+        <grid-heading>
+          <box v-for="c in od.columns" @click="od.column$click?.(c)">
+            <span>{{ c.heading }}</span>
+            <span v-if="od.sorting.column===c">&nbsp;({{ od.sorting.desc?'desc':'asc' }})</span>
+          </box>
+        </grid-heading>
+        <grid-row v-for="d,i in od.data">
+          <box v-for="c in od.columns" :class="c.class"
+            @click="c.onclick?.(d)"
+            >{{ c.display(d) }}</box>
+        </grid-row>
+      </grid-layout>
+    </vueTemplate>
+  </group>
   <group id="sliders">
     <vueTemplate id="t-range-slider">
       <combo type="range_slider">
