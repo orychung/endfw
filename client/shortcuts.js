@@ -76,11 +76,12 @@ var http = new Proxy(httpBase, {
         if (['delete','get','head','patch','post','put'].includes(prop)) {
             thisArg.options.method = prop.toUpperCase();
         }
-        if (['form','json','xml'].includes(prop)) {
+        if (['form','json','xml','multipart'].includes(prop)) {
             thisArg.options.headers['Content-Type'] = {
                 form: 'application/x-www-form-urlencoded',
                 json: 'application/json',
                 xml: 'application/xml',
+                multipart: 'multipart/form-data',
             }[prop];
         }
         if (['asBinary','asDownload','asText','asResponse'].includes(prop)) {
