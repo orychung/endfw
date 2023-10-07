@@ -21,7 +21,7 @@ combin.range = function (start, end = NaN, step = 1) {
 combin.rangeShuffled = (start, end = NaN, step = 1) => combin.range(start, end, step).shuffle();
 
 function bulkCalculate(f, outArray, ...inArrays) {
-    outArray.convert((x,i)=>f(i, ...inArrays.map(x=>x[i])));
+    outArray.convert((x0,i0)=>f(i0, ...inArrays.map(x1=>x1[i0])));
 }
 
 // function Counter(target={}) {
