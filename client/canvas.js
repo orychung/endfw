@@ -10,6 +10,10 @@ HTMLCanvasElement.defineMethod('clearImage', function clearImage() {
   this.ctx.clearRect(0, 0, this.width, this.height);
 });
 HTMLCanvasElement.defineMethod('loadFile', function loadFile(src) {
+  if (src instanceof File) {
+    if (!browse) throw 'shortcuts.js is required to load a File to canvas!';
+    src = browse.file.dataURL(src);
+  }
   return new Promise((s,f)=>{
     let canvas = this;
     let img = new Image();
@@ -19,7 +23,9 @@ HTMLCanvasElement.defineMethod('loadFile', function loadFile(src) {
       canvas.ctx.drawImage(img, 0, 0);
       s();
     };
-    img.src = src;
+    Promise.resolve(src).then(src=>{
+      img.src = src;
+    });
   });
 });
 HTMLCanvasElement.defineMethod('downloadAsFile', function downloadAsFile(options) {

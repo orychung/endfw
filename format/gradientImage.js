@@ -1,6 +1,8 @@
 // must include math/matrix.js
 // must include promise.js
 
+console.warn('gradientImage.js is deprecated and moved to another private research project. It will be dropped in the future.');
+
 const LOOP4 = [0,1,2,3];
 const LOOP16 = Array(16).fill().map((x,i)=>i);
 const O_D_N = Array(256).fill().map(x=>new Uint8ClampedArray(256))
