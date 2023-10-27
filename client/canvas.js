@@ -28,6 +28,11 @@ HTMLCanvasElement.defineMethod('loadFile', function loadFile(src) {
     });
   });
 });
+HTMLCanvasElement.defineMethod('predictFileSize', function predictFileSize(format, quality) {
+  let dataURL = this.toDataURL(format, quality);
+  let commaPosition = dataURL.indexOf(',');
+  return (dataURL.length-commaPosition-1)/4*3 - (dataURL.slice(-2).split('=').length-1);
+});
 HTMLCanvasElement.defineMethod('downloadAsFile', function downloadAsFile(options) {
   if (!browse) throw 'shortcuts.js is required!';
   let format = options.format??'image/png';
