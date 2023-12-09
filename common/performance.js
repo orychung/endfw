@@ -7,8 +7,8 @@ function addMethod(f) {
   };
 }
 
-if (!Performance.prototype.enumerateFunction)
-Object.defineProperty(Performance.prototype, 'enumerateFunction', addMethod(async function enumerateFunction(f, options={}) {
+if (!performance.__proto__.enumerateFunction)
+Object.defineProperty(performance.__proto__, 'enumerateFunction', addMethod(async function enumerateFunction(f, options={}) {
   let minTestTime = options.minTestTime || 0;
   let testStartTime = this.now();
   let totalExecTime = 0;
