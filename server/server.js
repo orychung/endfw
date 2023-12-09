@@ -201,24 +201,24 @@ class Returner {
         var html = fs.readFileSync(resourcePath).toString();
         if (standalone) {
         // perform content substitution to make the page standalone
-          var re = new RegExp('  <link rel="stylesheet" type="text/css" href="[.][.]([^"]+)" />', 'g');
+          var re = new RegExp('<link rel="stylesheet" type="text/css" href="[.][.]([^"]+)" />', 'g');
           var matches = html.match(re);
           matches && await matches.map(async x=>{
             var name = x.replace(re, '$1').replace('/[[buildHash]]/','/');
             var cssContent = await (await fetch(this.server.url+name, {
               agent: this.server.selfAgent
             })).text();
-            html = html.split(x).join('  <style type="text/css">'+cssContent+'</style>');
+            html = html.split(x).join('<style type="text/css">'+cssContent+'</style>');
           }).done();
           
-          var re = new RegExp('  <script type="text/javascript" src="[.][.]([^"]+)"( charset="utf-8")?></script>', 'g');
+          var re = new RegExp('<script type="text/javascript" src="[.][.]([^"]+)"( charset="utf-8")?></script>', 'g');
           var matches = html.match(re);
           matches && await matches.map(async x=>{
             var name = x.replace(re, '$1').replace('/[[buildHash]]/','/');
             var jsContent = await (await fetch(this.server.url+name, {
               agent: this.server.selfAgent
             })).text();
-            html = html.split(x).join('  <script type="text/javascript">'+jsContent+'</script>');
+            html = html.split(x).join('<script type="text/javascript">'+jsContent+'</script>');
           }).done();
           
           var re = new RegExp(`await http.get[(]'[.][.]([^']+)'[)]`, 'g');
