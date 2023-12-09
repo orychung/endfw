@@ -229,6 +229,7 @@ class Returner {
               agent: this.server.selfAgent
             })).text();
             xmlContent = xmlContent
+              .split('\\').join('\\\\')
               .split('$').join('\\$')
               .split('`').join('\\`');
             html = html.split(x).join('`'+xmlContent+'`');
