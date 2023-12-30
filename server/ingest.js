@@ -22,10 +22,9 @@ let ingestRequest = {
   })
 }
 
-const requestIp = require('request-ip');
 let logRequest = {
   ip_method_url: async function logRequest(req, res, next) {
-    req.clientIp = requestIp.getClientIp(req);
+    req.clientIp = req.connection.remoteAddress;
     req.now_ms = Date.now();
     req.now_s = Math.floor(req.now_ms/1000);
     res.returner.server.log(req.clientIp+' '+req.method+' '+req.url);
