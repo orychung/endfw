@@ -7,11 +7,11 @@ let lib = {
 
 class FileSegment {
   static doneCallback(res, data) {
-    ret.json({data: data, result: "success"});
+    res.returner.json({data: data, result: "success"});
   }
   static errorCallback(res, e, defaultCode, defaultMessage) {
     console.error(e);
-    ret.jsonError(defaultCode, defaultMessage);
+    res.returner.jsonError(defaultCode, defaultMessage);
   }
   constructor(options = {}) {
     this.basePath = options.basePath;
