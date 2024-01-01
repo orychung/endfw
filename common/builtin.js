@@ -200,8 +200,8 @@ var builtin_doc = {
     loopJoin: "analog of SQL nested loop join o2, fKey(k1, k2), fVal(x1, x2, k1, k2), fFil(x1, x2, k1, k2)",
     asPMF: "bridge to apply stat.js", // require stat.js
     convert: "similar to Array.map, but store the outcome in place",
-  logDebug: "[debug use] log function of this (useful for method chain)",
-  logThis: "[debug use] log this (useful for method chain)",
+    logDebug: "[debug use] log function of this (useful for method chain)",
+    logThis: "[debug use] log this (useful for method chain)",
     pushTo: "add this to an array or an object",
     touch: "locate an attribute and allow fitting a default if not existing",
     undergo: "pass this to a function (or array of functions) and return the result",
