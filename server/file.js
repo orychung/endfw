@@ -50,7 +50,7 @@ class FileSegment {
       return this[action](req, param);
     };
   }
-  readdir(req, res, path, param) {
+  async readdir(req, res, path, param) {
     try {
       let data = await lib.fs.promises.readdir(path,{withFileTypes:true});
       // at Node.js 21, Dirent keys: [name, parentPath, path, Symbol(type)]
