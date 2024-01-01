@@ -16,8 +16,10 @@ class FileSegment {
   constructor(options = {}) {
     this.basePath = options.basePath;
     if (!options.basePath) throw '[FileSegment] basePath must be specified';
-    this.regExp = options.regExp??this.basePath + '(/.*)?'; // no regExp means all paths allowed
+    this.regExp = options.regExp??this.basePath + '(/.*)?'); // no regExp means all paths allowed
+    if (!(this.regExp instanceof RegExp)) this.regExp = new RegExp(this.regExp);
     this.ingestRegExp = options.ingestRegExp??this.regExp; // no regExp means all paths allowed
+    if (!(this.ingestRegExp instanceof RegExp)) this.ingestRegExp = new RegExp(this.ingestRegExp);
     this.paramExp = options.paramExp??(req=>req.p); // ingest.js loads params to req.p
     this.pathExp = options.pathExp??(req=>req.p.path);
     this.actionExp = options.actionExp??(req=>req.parsedUrl.seg(0)); // ingest.js creates req.parsedUrl
@@ -36,17 +38,18 @@ class FileSegment {
         .replace(/[\\]/g, '/')
         .replace(/^\.([\/$])/, this.basePath+'$1');
       let path = lib.path.resolve(unresolvedPath);
-      if (!this.regExp.test(path)) return next();
+      if (!this.ingestRegExp.test(path)) return next();
+      if (!this.regExp.test(path)) return this.errorCallback(res, undefined, 404, "path not found");
       if (this.blockGet) {
-        if (req.method=='GET') return this.errorCallback(res, 405, "method not allowed");
+        if (req.method=='GET') return this.errorCallback(res, undefined, 405, "method not allowed");
       }
       if (this.tokenExp) {
         let token = this.tokenExp(req);
-        if (!this.tokenValidator(token, req)) return this.errorCallback(res, 403, "not authorised");
+        if (!this.tokenValidator(token, req)) return this.errorCallback(res, undefined, 403, "not authorised");
       }
       let action = this.actionExp(req);
       let param = this.paramExp(req);
-      if (!(typeof this[action] == 'function')) return this.errorCallback(res, 404, "action not found");
+      if (!(typeof this[action] == 'function')) return this.errorCallback(res, undefined, 404, "action not found");
       return this[action](req, param);
     };
   }
@@ -67,7 +70,7 @@ class FileSegment {
       }));
       return this.doneCallback(res, data);
     }
-    catch (e) { return this.errorCallback(res, 400, "unknown failure"); }
+    catch (e) { return this.errorCallback(res, e, 400, "unknown failure"); }
   }
   readFile(req, res, path, param) {
     try {
@@ -76,16 +79,16 @@ class FileSegment {
         "Content-Disposition" : "attachment; filename=" + encodeURIComponent(lib.path.basename(path))
       });
       let readStream = lib.fs.createReadStream(path);
-      readStream.on('error', console.error);
+      readStream.on('error', e=>this.errorCallback(res, e, 404, "path not found"));
       readStream.pipe(res);
       return;
     }
-    catch (e) { return this.errorCallback(res, 400, "unknown failure"); }
+    catch (e) { return this.errorCallback(res, e, 400, "unknown failure"); }
   }
   writeFile(req, res, path, param) {
     try {
       let writeStream = lib.fs.createWriteStream(path);
-      writeStream.on('error', console.error);
+      writeStream.on('error', e=>this.errorCallback(res, e, 400, "unknown failure"));
       req.on('end', ()=>{
         this.doneCallback(res, undefined);
         writeStream.end();
@@ -93,7 +96,7 @@ class FileSegment {
       req.pipe(writeStream);
       return;
     }
-    catch (e) { return this.errorCallback(res, 400, "unknown failure"); }
+    catch (e) { return this.errorCallback(res, e, 400, "unknown failure"); }
   }
 }
 
