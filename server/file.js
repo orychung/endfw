@@ -68,6 +68,7 @@ class FileSegment {
       return this.doneCallback(res, data);
     }
     catch (e) { return this.errorCallback(res, 400, "unknown failure"); }
+  }
   readFile(req, res, path, param) {
     try {
       res.returner.closeHead(200, {
@@ -80,6 +81,7 @@ class FileSegment {
       return;
     }
     catch (e) { return this.errorCallback(res, 400, "unknown failure"); }
+  }
   writeFile(req, res, path, param) {
     try {
       let writeStream = lib.fs.createWriteStream(path);
