@@ -31,7 +31,7 @@ class FileSegment {
     this.tokenValidator = options.tokenValidator??(function (token, req) {return token==this.token;});
   }
   get handler() {
-    return async function handler(req, res, next) {
+    return async (req, res, next)=>{
       let unresolvedPath = this.pathExp(req)
         .replace(/[\\]/g, '/')
         .replace(/^\.([\/$])/, this.basePath+'$1');
