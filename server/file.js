@@ -50,7 +50,7 @@ class FileSegment {
       let action = this.actionExp(req);
       let param = this.paramExp(req);
       if (!(typeof this[action] == 'function')) return this.errorCallback(res, undefined, 404, "action not found");
-      return this[action](req, param);
+      return this[action](req, res, path, param);
     };
   }
   async readdir(req, res, path, param) {
