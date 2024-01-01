@@ -4,6 +4,7 @@ if (typeof module === 'undefined') {
 } else {
   module.exports = {
     dynamic: require('./server/dynamic'),
+    file: require('./server/file'),
     lessCss: require('./server/lessCss'),
     mssql: require('./server/mssql'),
     pg: require('./server/pg'),
