@@ -22,7 +22,7 @@ class FileSegment {
     if (!(this.ingestRegExp instanceof RegExp)) this.ingestRegExp = new RegExp(this.ingestRegExp);
     this.paramExp = options.paramExp??(req=>req.p); // ingest.js loads params to req.p
     this.pathExp = options.pathExp??(req=>req.p.path);
-    this.actionExp = options.actionExp??(req=>req.parsedUrl.seg(0)); // ingest.js creates req.parsedUrl
+    this.actionExp = options.actionExp??(req=>req.parsedUrl.seg(1)); // ingest.js creates req.parsedUrl
     this.blockGet = options.blockGet??true; // block GET to avoid Lax cookie being abused
     
     this.doneCallback = options.doneCallback??FileSegment.doneCallback;
