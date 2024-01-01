@@ -16,7 +16,7 @@ class FileSegment {
   constructor(options = {}) {
     this.basePath = options.basePath;
     if (!options.basePath) throw '[FileSegment] basePath must be specified';
-    this.regExp = options.regExp??this.basePath + '(/.*)?'); // no regExp means all paths allowed
+    this.regExp = options.regExp??(this.basePath + '(/.*)?'); // no regExp means all paths allowed
     if (!(this.regExp instanceof RegExp)) this.regExp = new RegExp(this.regExp);
     this.ingestRegExp = options.ingestRegExp??this.regExp; // no regExp means all paths allowed
     if (!(this.ingestRegExp instanceof RegExp)) this.ingestRegExp = new RegExp(this.ingestRegExp);
