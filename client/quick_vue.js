@@ -48,38 +48,42 @@ try {
 }
 
 Vue.endAddOn.createApp = function(options) {
+  if (!options.mountSelectors) return console.error('mountSelectors must be specified');
   let allComputed = Object.assign({}, Vue.endAddOn.commonComputed);
   if (options.computed) Object.assign(allComputed, options.computed);
   let allMethods = Object.assign({}, Vue.endAddOn.commonMethods);
   if (options.methods) Object.assign(allMethods, options.methods);
-  let app = Vue.createApp({
-    computed: allComputed,
-    methods: allMethods,
-    data: ()=>Object({all: globalThis.all}),
-  });
-  (options.templates || Vue.endAddOn.templates || []).forEach(x=>{
+  let allTemplates = options.templates || Vue.endAddOn.templates || [];
+  allTemplates.forEach(x=>{
     let allComputed = Object.assign({}, Vue.endAddOn.commonComputed);
     if (x.type) Object.assign(allComputed, Vue.endAddOn.templateTypes[x.type].computed);
     let allMethods = Object.assign({}, Vue.endAddOn.commonMethods);
     if (x.type) Object.assign(allMethods, Vue.endAddOn.templateTypes[x.type].methods);
     let allProps = [].concat(Vue.endAddOn.commonProps);
     if (x.type) allProps = allProps.concat(Vue.endAddOn.templateTypes[x.type].props);
-    app.component(x.id, {
+    x.details = {
       computed: allComputed,
       props: allProps,
       methods: allMethods,
       template: x.innerHTML,
+    };
+  });
+  let app;
+  options.mountSelectors.forEach(selector=>{
+    app = Vue.createApp({
+      computed: allComputed,
+      methods: allMethods,
+      data: ()=>Object({all: globalThis.all}),
     });
-  });
-  app.directive('focus', {
-    // When the bound element is mounted into the DOM...
-    mounted(el) {
-      // Focus the element
-      el.focus()
-    }
-  });
-  (options.mountSelectors || []).forEach(selector=>{
+    allTemplates.forEach(x=>app.component(x.id, x.details));
+    app.directive('focus', {
+      // When the bound element is mounted into the DOM...
+      mounted(el) {
+        // Focus the element
+        el.focus()
+      }
+    });
     globalThis.all = app.mount(selector).all;
-  })
+  });
   return app;
 };
