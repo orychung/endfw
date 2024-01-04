@@ -177,7 +177,7 @@ String.defineMethod('splitNum', function splitNum(delimiter) {
     get() {
       return (async ()=>{
         let files = [];
-        for await (file of getFilesRecursively(await this.getAsFileSystemHandle())) {
+        for await (const file of getFilesRecursively(await this.getAsFileSystemHandle())) {
           files.push(file);
         }
         return files;
