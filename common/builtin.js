@@ -209,12 +209,12 @@ JSON.listify = function(objBody, objName, index) {
 var builtin_doc = {
   Function: {
     defineMethod: "shortcut to define method at prototype",
-  }
+  },
   Array: {
     at: "early availability for ES 2022",
     lookupOf: "form a key > value map",
     sortBy: "sort by value of single-param function",
-    shuffle: "reorder items randomly"
+    shuffle: "reorder items randomly",
   },
   Object: {
     $: "init object with jQuery $",
@@ -248,7 +248,7 @@ var builtin_doc = {
   JSON: {
     serialCopy: "copy object by stringify and parse",
     listify: "output JSON as a list",
-  }
+  },
 }
 
 // for being imported as node module
