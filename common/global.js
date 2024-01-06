@@ -1,16 +1,16 @@
-var g = Object(); // global local information container
+/* global information container
+  use with care, fail if:
+  - "g" is used
+  - more than one component uses same property of g
+*/
+if (globalThis.g===undefined) globalThis.g = Object();
 
-function pass() { return; };
-
-sequenceGenerator = function* (i = 1) {while (true) yield i++;};
-
-// for being imported as node module
-if (typeof module === 'undefined') {
-    // skip if not running node
-} else {
-    module.exports = {
-        pass: pass,
-        sequenceGenerator: sequenceGenerator,
-        g: g
-    };
+if (g.next===undefined)  {
+  let sequences = ()=>{};
+  g.next = new Proxy(sequences, {
+    apply(target, thisArg, args) {
+      if (!(args[0] in sequences)) sequences[args[0]] = 0;
+      return sequences[args[0]]++;
+    }
+  });
 }
