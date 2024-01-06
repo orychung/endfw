@@ -42,8 +42,8 @@ class Server {
     this.port = options.port || 443;
     this.context = options.context || '';
     
-    this.log = options.log || ()=>{};
-    this.peerDisposal = options.peerDisposal || ()=>{};
+    this.log = options.log || (()=>{});
+    this.peerDisposal = options.peerDisposal || (()=>{});
     this.cookieSecret = options.cookieSecret || '<abc>this is the secret</abc>';
     this.cspHeaderSets.default = Server.compileCspHeader(
       options.cspDirectives
