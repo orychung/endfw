@@ -25,7 +25,7 @@
     get() {
       return (async ()=>{
         const files = [];
-        for await (const file of this.getAsFiles) {
+        for await (const file of this.getAsFiles()) {
           files.push(file);
         }
         return files;
