@@ -158,35 +158,6 @@ String.defineMethod('splitNum', function splitNum(delimiter) {
 });
 
 // custom
-{
-  // modified from https://developer.mozilla.org/en-US/docs/Web/API/FileSystemDirectoryHandle
-  async function* getFilesRecursively(entry, path='') {
-    if (entry.kind === "file") {
-      const file = await entry.getFile();
-      if (file !== null) {
-        file.relativePath = (path+'/'+entry.name).slice(1);
-        yield file;
-      }
-    } else if (entry.kind === "directory") {
-      for await (const handle of entry.values()) {
-        yield* getFilesRecursively(handle, path+'/'+entry.name);
-      }
-    }
-  }
-  Object.defineProperty(DataTransferItem.prototype, "files", {
-    get() {
-      return (async ()=>{
-        let files = [];
-        for await (const file of getFilesRecursively(await this.getAsFileSystemHandle())) {
-          files.push(file);
-        }
-        return files;
-      })();
-    }
-  });
-};
-
-// custom
 JSON.serialCopy = function(obj) {return JSON.parse(JSON.stringify(obj));}
 JSON.listify = function(objBody, objName, index) {
   let prefix = '<b>'+objName+((index==null)?'':('['+index+']'))+': </b>'
@@ -241,9 +212,6 @@ var builtin_doc = {
   String: {
     likeRE: "analog of SQL like, changed to use RE as pattern",
     splitNum: "split but added parseInt",
-  },
-  DataTransferItem: {
-    files: "shortcut to get all files recursively",
   },
   JSON: {
     serialCopy: "copy object by stringify and parse",
