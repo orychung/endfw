@@ -7,7 +7,6 @@ const path = require('path');
 const contentType = require('content-type');
 const mime = require('mime');
 const WebSocketServer = require('websocket').server;
-const {g, pass, sequenceGenerator} = require('../common/global');
 const {fetch} = require('../server/serverUtil.js');
 const Subroute = require('../server/subroute.js');
 
@@ -43,8 +42,8 @@ class Server {
     this.port = options.port || 443;
     this.context = options.context || '';
     
-    this.log = options.log || pass;
-    this.peerDisposal = options.peerDisposal || pass;
+    this.log = options.log || ()=>{};
+    this.peerDisposal = options.peerDisposal || ()=>{};
     this.cookieSecret = options.cookieSecret || '<abc>this is the secret</abc>';
     this.cspHeaderSets.default = Server.compileCspHeader(
       options.cspDirectives
@@ -95,7 +94,7 @@ class Server {
     });
   }
   disposePeer(peer) {this.peerDisposal(peer);}
-  checkResource(filePath, callback=pass) {
+  checkResource(filePath, callback=(()=>{})) {
     var inventoryName = 'default';
     if (filePath instanceof Array) {
       inventoryName = filePath[0];
