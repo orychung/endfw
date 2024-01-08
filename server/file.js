@@ -15,7 +15,7 @@ class FileSegment {
   }
   constructor(options = {}) {
     this.basePath = options.basePath;
-    if (!options.basePath) throw '[FileSegment] basePath must be specified';
+    if (options.basePath==null) throw '[FileSegment] basePath must be specified';
     this.regExp = options.regExp??('^' + this.basePath + '(/.*)?$'); // no regExp means all paths allowed
     if (!(this.regExp instanceof RegExp)) this.regExp = new RegExp(this.regExp);
     this.ingestRegExp = options.ingestRegExp??this.regExp; // no regExp means all paths allowed
@@ -74,7 +74,7 @@ class FileSegment {
   }
   readFile(req, res, path, param) {
     try {
-      if (!lib.fs.existsSync(path)) return this.errorCallback(res, e, 404, "path not found");
+      if (!lib.fs.existsSync(path)) return this.errorCallback(res, undefined, 404, "path not found");
       res.returner.closeHead(200, {
         "Content-Type": "application/octet-stream",
         "Content-Disposition" : "attachment; filename=" + encodeURIComponent(lib.path.basename(path))
