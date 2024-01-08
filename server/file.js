@@ -34,10 +34,10 @@ class FileSegment {
   }
   get handler() {
     return async (req, res, next)=>{
-      let unresolvedPath = this.pathExp(req)
+      let unresolvedPath = this.basePath + this.pathExp(req)
         .replace(/[\\]/g, '/')
-        .replace(/^\.([\/$])/, this.basePath+'$1');
-      let path = lib.path.resolve(unresolvedPath);
+        .replace(this.basePath, '');
+      let path = lib.path.resolve(unresolvedPath).replace(/[\\]/g, '/');
       if (!this.ingestRegExp.test(path)) return next();
       if (!this.regExp.test(path)) return this.errorCallback(res, undefined, 404, "path not found");
       if (this.blockGet) {
