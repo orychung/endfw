@@ -74,12 +74,16 @@ class FileSegment {
   }
   readFile(req, res, path, param) {
     try {
+      if (!lib.fs.existsSync(path)) return this.errorCallback(res, e, 404, "path not found");
       res.returner.closeHead(200, {
         "Content-Type": "application/octet-stream",
         "Content-Disposition" : "attachment; filename=" + encodeURIComponent(lib.path.basename(path))
       });
       let readStream = lib.fs.createReadStream(path);
-      readStream.on('error', e=>this.errorCallback(res, e, 404, "path not found"));
+      readStream.on('error', e=>
+        console.error(e);
+        if (!res.closed) res.close();
+      });
       readStream.pipe(res);
       return;
     }
