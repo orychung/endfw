@@ -16,7 +16,7 @@ class FileSegment {
   constructor(options = {}) {
     this.basePath = options.basePath;
     if (!options.basePath) throw '[FileSegment] basePath must be specified';
-    this.regExp = options.regExp??(this.basePath + '(/.*)?'); // no regExp means all paths allowed
+    this.regExp = options.regExp??('^' + this.basePath + '(/.*)?$'); // no regExp means all paths allowed
     if (!(this.regExp instanceof RegExp)) this.regExp = new RegExp(this.regExp);
     this.ingestRegExp = options.ingestRegExp??this.regExp; // no regExp means all paths allowed
     if (!(this.ingestRegExp instanceof RegExp)) this.ingestRegExp = new RegExp(this.ingestRegExp);
@@ -34,10 +34,10 @@ class FileSegment {
   }
   get handler() {
     return async (req, res, next)=>{
-      let unresolvedPath = this.pathExp(req)
+      let unresolvedPath = this.basePath + '/' + this.pathExp(req)
         .replace(/[\\]/g, '/')
-        .replace(/^\.([\/$])/, this.basePath+'$1');
-      let path = lib.path.resolve(unresolvedPath);
+        .replace(this.basePath, '');
+      let path = lib.path.resolve(unresolvedPath).replace(/[\\]/g, '/');
       if (!this.ingestRegExp.test(path)) return next();
       if (!this.regExp.test(path)) return this.errorCallback(res, undefined, 404, "path not found");
       if (this.blockGet) {
@@ -74,12 +74,16 @@ class FileSegment {
   }
   readFile(req, res, path, param) {
     try {
+      if (!lib.fs.existsSync(path)) return this.errorCallback(res, e, 404, "path not found");
       res.returner.closeHead(200, {
         "Content-Type": "application/octet-stream",
         "Content-Disposition" : "attachment; filename=" + encodeURIComponent(lib.path.basename(path))
       });
       let readStream = lib.fs.createReadStream(path);
-      readStream.on('error', e=>this.errorCallback(res, e, 404, "path not found"));
+      readStream.on('error', e=>{
+        console.error(e);
+        if (!res.closed) res.close();
+      });
       readStream.pipe(res);
       return;
     }
