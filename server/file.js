@@ -80,7 +80,7 @@ class FileSegment {
         "Content-Disposition" : "attachment; filename=" + encodeURIComponent(lib.path.basename(path))
       });
       let readStream = lib.fs.createReadStream(path);
-      readStream.on('error', e=>
+      readStream.on('error', e=>{
         console.error(e);
         if (!res.closed) res.close();
       });
