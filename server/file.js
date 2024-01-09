@@ -3,7 +3,7 @@
 let lib = {
   fs: require('fs'),
   path: require('path'),
-}
+};
 
 var fileUtil = {
   async gatherStat(path, data) {
@@ -122,12 +122,48 @@ class FileSegment {
   }
 }
 
+class DelimitedText {
+  constructor(options) {
+    Object.assign(this, options);
+    if (this.path==null) throw '[DelimitedText] options.path must be specified';
+    if (this.delimiter==null) this.delimiter = '\t';
+  }
+  readAsArray(keys) {
+    return this.readLines(line=>{
+      const obj = {};
+      const values = line.split(this.delimiter);
+      keys.forEach((k,i)=>{
+        if (k!=null) obj[k] = values[i];
+      });
+      return obj;
+    });
+  }
+  async *readLines(f=(x=>x)) {
+    let handle = await lib.fs.promises.open(this.path);
+    for await (const line of handle.readLines()) {
+      yield f(line);
+    }
+    handle.close();
+  }
+  writeArray(data, keys) {
+    let writer = lib.fs.createWriteStream(this.path);
+    data.forEach(x=>{
+      let line = keys.map(k=>(k instanceof Function)?k(x):x[k]).join(this.delimiter);
+      writer.write(line);
+    });
+    writer.close();
+  }
+}
+
 // for being imported as node module
 if (typeof module === 'undefined') {
   // skip if not running node
 } else {
   module.exports = {
-    FileSegment,
+    // utils
     fileUtil,
+    // classes
+    FileSegment,
+    DelimitedText,
   }
 }
