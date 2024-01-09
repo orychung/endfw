@@ -5,6 +5,36 @@ let lib = {
   path: require('path'),
 }
 
+var fileUtil = {
+  async gatherStat(data) {
+    // at Node.js 21, Dirent keys: [name, parentPath, path, Symbol(type)]
+    let s = Reflect.ownKeys(new lib.fs.Dirent()).filter(x=>(typeof x) == 'symbol')[0];
+    await Promise.all(data.map(async d=>{
+      // REF: https://stackoverflow.com/questions/62837749/nodejs-14-5-filesystem-api-what-is-the-dirent-symboltype-property
+      d.type = ['unknown','file','dir','link','fifo','socket','char','block'][d[s]];
+      try {
+        d.stat = await lib.fs.promises.stat(path+'/'+d.name);
+      } catch(e) {
+        if (e.code == 'EPERM') 0
+        else console.error(e);
+      }
+    }));
+    return data;
+  }
+  readdir(path) {
+    return lib.fs.promises
+      .readdir(path,{withFileTypes:true})
+      .then(fileUtil.gatherStat);
+  }
+  resolve(path, basePath) {
+    let unresolvedPath = path
+      .replace(/[\\]/g, '/')
+      .replace(basePath, '');
+    if (basePath) unresolvedPath = basePath + '/' + unresolvedPath;
+    return lib.path.resolve(unresolvedPath).replace(/[\\]/g, '/');
+  }
+};
+
 class FileSegment {
   static doneCallback(res, data) {
     res.returner.json({data: data, result: "success"});
@@ -34,47 +64,35 @@ class FileSegment {
   }
   get handler() {
     return async (req, res, next)=>{
-      let unresolvedPath = this.basePath + '/' + this.pathExp(req)
-        .replace(/[\\]/g, '/')
-        .replace(this.basePath, '');
-      let path = lib.path.resolve(unresolvedPath).replace(/[\\]/g, '/');
+      if (this.tokenExp) {
+        let token = this.tokenExp(req);
+        if (!this.tokenValidator(token, req)) return this.errorCallback(res, undefined, 403, "not authorised");
+      }
+      
+      let action = this.actionExp(req);
+      if (!(typeof this[action] == 'function')) return this.errorCallback(res, undefined, 404, "action not found");
+      let param = this.paramExp(req);
+      
+      let path = fileUtil.resolve(this.pathExp(req), this.basePath);
       if (!this.ingestRegExp.test(path)) return next();
       if (!this.regExp.test(path)) return this.errorCallback(res, undefined, 404, "path not found");
       if (this.blockGet) {
         if (req.method=='GET') return this.errorCallback(res, undefined, 405, "method not allowed");
       }
-      if (this.tokenExp) {
-        let token = this.tokenExp(req);
-        if (!this.tokenValidator(token, req)) return this.errorCallback(res, undefined, 403, "not authorised");
-      }
-      let action = this.actionExp(req);
-      let param = this.paramExp(req);
-      if (!(typeof this[action] == 'function')) return this.errorCallback(res, undefined, 404, "action not found");
       return this[action](req, res, path, param);
     };
   }
   async readdir(req, res, path, param) {
     try {
-      let data = await lib.fs.promises.readdir(path,{withFileTypes:true});
-      // at Node.js 21, Dirent keys: [name, parentPath, path, Symbol(type)]
-      let s = Reflect.ownKeys(new lib.fs.Dirent()).filter(x=>(typeof x) == 'symbol')[0];
-      await Promise.all(data.map(async d=>{
-        // REF: https://stackoverflow.com/questions/62837749/nodejs-14-5-filesystem-api-what-is-the-dirent-symboltype-property
-        d.type = ['unknown','file','dir','link','fifo','socket','char','block'][d[s]];
-        try {
-          d.stat = await lib.fs.promises.stat(path+'/'+d.name);
-        } catch(e) {
-          if (e.code == 'EPERM') 0
-          else console.error(e);
-        }
-      }));
-      return this.doneCallback(res, data);
+      return this.doneCallback(res, await fileUtil.readdir(path));
     }
     catch (e) { return this.errorCallback(res, e, 400, "unknown failure"); }
   }
   readFile(req, res, path, param) {
     try {
-      if (!lib.fs.existsSync(path)) return this.errorCallback(res, undefined, 404, "path not found");
+      const checkExists = lib.fs.promises.stat(path);
+      checkExists.catch(e=>this.errorCallback(res, undefined, 404, "path not found"));
+      await checkExists;
       res.returner.closeHead(200, {
         "Content-Type": "application/octet-stream",
         "Content-Disposition" : "attachment; filename=" + encodeURIComponent(lib.path.basename(path))
@@ -110,5 +128,6 @@ if (typeof module === 'undefined') {
 } else {
   module.exports = {
     FileSegment,
+    fileUtil,
   }
 }
