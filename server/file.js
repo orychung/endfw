@@ -20,19 +20,19 @@ var fileUtil = {
       }
     }));
     return data;
-  }
+  },
   readdir(path) {
     return lib.fs.promises
       .readdir(path,{withFileTypes:true})
       .then(fileUtil.gatherStat);
-  }
+  },
   resolve(path, basePath) {
     let unresolvedPath = path
       .replace(/[\\]/g, '/')
       .replace(basePath, '');
     if (basePath) unresolvedPath = basePath + '/' + unresolvedPath;
     return lib.path.resolve(unresolvedPath).replace(/[\\]/g, '/');
-  }
+  },
 };
 
 class FileSegment {
@@ -88,7 +88,7 @@ class FileSegment {
     }
     catch (e) { return this.errorCallback(res, e, 400, "unknown failure"); }
   }
-  readFile(req, res, path, param) {
+  async readFile(req, res, path, param) {
     try {
       const checkExists = lib.fs.promises.stat(path);
       checkExists.catch(e=>this.errorCallback(res, undefined, 404, "path not found"));
