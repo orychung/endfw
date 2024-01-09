@@ -6,7 +6,7 @@ let lib = {
 }
 
 var fileUtil = {
-  async gatherStat(data) {
+  async gatherStat(path, data) {
     // at Node.js 21, Dirent keys: [name, parentPath, path, Symbol(type)]
     let s = Reflect.ownKeys(new lib.fs.Dirent()).filter(x=>(typeof x) == 'symbol')[0];
     await Promise.all(data.map(async d=>{
@@ -24,7 +24,7 @@ var fileUtil = {
   readdir(path) {
     return lib.fs.promises
       .readdir(path,{withFileTypes:true})
-      .then(fileUtil.gatherStat);
+      .then(data=>fileUtil.gatherStat(path, data));
   },
   resolve(path, basePath) {
     let unresolvedPath = path
