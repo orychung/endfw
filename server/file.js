@@ -3,7 +3,37 @@
 let lib = {
   fs: require('fs'),
   path: require('path'),
-}
+};
+
+var fileUtil = {
+  async gatherStat(path, data) {
+    // at Node.js 21, Dirent keys: [name, parentPath, path, Symbol(type)]
+    let s = Reflect.ownKeys(new lib.fs.Dirent()).filter(x=>(typeof x) == 'symbol')[0];
+    await Promise.all(data.map(async d=>{
+      // REF: https://stackoverflow.com/questions/62837749/nodejs-14-5-filesystem-api-what-is-the-dirent-symboltype-property
+      d.type = ['unknown','file','dir','link','fifo','socket','char','block'][d[s]];
+      try {
+        d.stat = await lib.fs.promises.stat(path+'/'+d.name);
+      } catch(e) {
+        if (e.code == 'EPERM') 0
+        else console.error(e);
+      }
+    }));
+    return data;
+  },
+  readdir(path) {
+    return lib.fs.promises
+      .readdir(path,{withFileTypes:true})
+      .then(data=>fileUtil.gatherStat(path, data));
+  },
+  resolve(path, basePath) {
+    let unresolvedPath = path
+      .replace(/[\\]/g, '/')
+      .replace(basePath, '');
+    if (basePath) unresolvedPath = basePath + '/' + unresolvedPath;
+    return lib.path.resolve(unresolvedPath).replace(/[\\]/g, '/');
+  },
+};
 
 class FileSegment {
   static doneCallback(res, data) {
@@ -15,7 +45,7 @@ class FileSegment {
   }
   constructor(options = {}) {
     this.basePath = options.basePath;
-    if (!options.basePath) throw '[FileSegment] basePath must be specified';
+    if (options.basePath==null) throw '[FileSegment] basePath must be specified';
     this.regExp = options.regExp??('^' + this.basePath + '(/.*)?$'); // no regExp means all paths allowed
     if (!(this.regExp instanceof RegExp)) this.regExp = new RegExp(this.regExp);
     this.ingestRegExp = options.ingestRegExp??this.regExp; // no regExp means all paths allowed
@@ -34,47 +64,35 @@ class FileSegment {
   }
   get handler() {
     return async (req, res, next)=>{
-      let unresolvedPath = this.basePath + '/' + this.pathExp(req)
-        .replace(/[\\]/g, '/')
-        .replace(this.basePath, '');
-      let path = lib.path.resolve(unresolvedPath).replace(/[\\]/g, '/');
+      if (this.tokenExp) {
+        let token = this.tokenExp(req);
+        if (!this.tokenValidator(token, req)) return this.errorCallback(res, undefined, 403, "not authorised");
+      }
+      
+      let action = this.actionExp(req);
+      if (!(typeof this[action] == 'function')) return this.errorCallback(res, undefined, 404, "action not found");
+      let param = this.paramExp(req);
+      
+      let path = fileUtil.resolve(this.pathExp(req), this.basePath);
       if (!this.ingestRegExp.test(path)) return next();
       if (!this.regExp.test(path)) return this.errorCallback(res, undefined, 404, "path not found");
       if (this.blockGet) {
         if (req.method=='GET') return this.errorCallback(res, undefined, 405, "method not allowed");
       }
-      if (this.tokenExp) {
-        let token = this.tokenExp(req);
-        if (!this.tokenValidator(token, req)) return this.errorCallback(res, undefined, 403, "not authorised");
-      }
-      let action = this.actionExp(req);
-      let param = this.paramExp(req);
-      if (!(typeof this[action] == 'function')) return this.errorCallback(res, undefined, 404, "action not found");
       return this[action](req, res, path, param);
     };
   }
   async readdir(req, res, path, param) {
     try {
-      let data = await lib.fs.promises.readdir(path,{withFileTypes:true});
-      // at Node.js 21, Dirent keys: [name, parentPath, path, Symbol(type)]
-      let s = Reflect.ownKeys(new lib.fs.Dirent()).filter(x=>(typeof x) == 'symbol')[0];
-      await Promise.all(data.map(async d=>{
-        // REF: https://stackoverflow.com/questions/62837749/nodejs-14-5-filesystem-api-what-is-the-dirent-symboltype-property
-        d.type = ['unknown','file','dir','link','fifo','socket','char','block'][d[s]];
-        try {
-          d.stat = await lib.fs.promises.stat(path+'/'+d.name);
-        } catch(e) {
-          if (e.code == 'EPERM') 0
-          else console.error(e);
-        }
-      }));
-      return this.doneCallback(res, data);
+      return this.doneCallback(res, await fileUtil.readdir(path));
     }
     catch (e) { return this.errorCallback(res, e, 400, "unknown failure"); }
   }
-  readFile(req, res, path, param) {
+  async readFile(req, res, path, param) {
     try {
-      if (!lib.fs.existsSync(path)) return this.errorCallback(res, e, 404, "path not found");
+      const checkExists = lib.fs.promises.stat(path);
+      checkExists.catch(e=>this.errorCallback(res, undefined, 404, "path not found"));
+      await checkExists;
       res.returner.closeHead(200, {
         "Content-Type": "application/octet-stream",
         "Content-Disposition" : "attachment; filename=" + encodeURIComponent(lib.path.basename(path))
@@ -104,11 +122,48 @@ class FileSegment {
   }
 }
 
+class DelimitedText {
+  constructor(options) {
+    Object.assign(this, options);
+    if (this.path==null) throw '[DelimitedText] options.path must be specified';
+    if (this.delimiter==null) this.delimiter = '\t';
+  }
+  readAsArray(keys) {
+    return Array.fromAsync(this.readLines(line=>{
+      const obj = {};
+      const values = line.split(this.delimiter);
+      keys.forEach((k,i)=>{
+        if (k!=null) obj[k] = values[i];
+      });
+      return obj;
+    }));
+  }
+  async *readLines(f=(x=>x)) {
+    let handle = await lib.fs.promises.open(this.path);
+    for await (const line of handle.readLines()) {
+      yield f(line);
+    }
+    handle.close();
+  }
+  writeArray(data, keys) {
+    let writer = lib.fs.createWriteStream(this.path);
+    data.forEach(x=>{
+      let line = keys.map(k=>(k instanceof Function)?k(x):x[k]).join(this.delimiter);
+      writer.write(line);
+    });
+    writer.close();
+  }
+}
+
 // for being imported as node module
 if (typeof module === 'undefined') {
   // skip if not running node
 } else {
   module.exports = {
+    // utils
+    fileUtil,
+    // classes
     FileSegment,
+    DelimitedText,
   }
 }
