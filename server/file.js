@@ -145,13 +145,13 @@ class DelimitedText {
     }
     handle.close();
   }
-  writeArray(data, keys) {
+  async writeArray(data, keys) {
     let writer = lib.fs.createWriteStream(this.path);
     data.forEach(x=>{
       let line = keys.map(k=>(k instanceof Function)?k(x):x[k]).join(this.delimiter);
       writer.write(line);
     });
-    writer.close();
+    await writer.close();
   }
 }
 
