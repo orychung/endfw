@@ -151,7 +151,10 @@ class DelimitedText {
       let line = keys.map(k=>(k instanceof Function)?k(x):x[k]).join(this.delimiter);
       writer.write(line);
     });
-    await writer.close();
+    let closeCallback;
+    let waitClose = new Promise(r=>closeCallback=r);
+    writer.close(closeCallback);
+    await waitClose;
   }
 }
 
