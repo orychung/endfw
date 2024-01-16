@@ -26,6 +26,13 @@ Array.defineMethod('done', async function done() {
   for (var i=0;i<out.length;i++) {out[i] = await this[i];}
   return out;
 });
+Array.fromAsync = async function fromAsync(asyncIterable) {
+  const items = [];
+  for await (const item of asyncIterable) {
+    items.push(item);
+  }
+  return items;
+};
 Array.defineMethod('lookupOf', function lookupOf(key, f=v=>v) {
   if (!key) throw '[lookupOf]: key (parameter 0) must be specified!';
   return this.mapKeyValue((k,v)=>v[key],v=>f(v));
@@ -183,6 +190,7 @@ var builtin_doc = {
   },
   Array: {
     at: "early availability for ES 2022",
+    fromAsync: "Array.from for async generator",
     lookupOf: "form a key > value map",
     sortBy: "sort by value of single-param function",
     shuffle: "reorder items randomly",

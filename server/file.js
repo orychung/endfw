@@ -129,14 +129,14 @@ class DelimitedText {
     if (this.delimiter==null) this.delimiter = '\t';
   }
   readAsArray(keys) {
-    return this.readLines(line=>{
+    return Array.fromAsync(this.readLines(line=>{
       const obj = {};
       const values = line.split(this.delimiter);
       keys.forEach((k,i)=>{
         if (k!=null) obj[k] = values[i];
       });
       return obj;
-    });
+    }));
   }
   async *readLines(f=(x=>x)) {
     let handle = await lib.fs.promises.open(this.path);
