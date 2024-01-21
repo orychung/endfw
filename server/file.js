@@ -128,7 +128,7 @@ class DelimitedText {
     if (this.path==null) throw '[DelimitedText] options.path must be specified';
     if (this.delimiter==null) this.delimiter = '\t';
   }
-  readAsArray(keys) {
+  readAsArray(keys = this.keys) {
     return Array.fromAsync(this.readLines(line=>{
       const obj = {};
       const values = line.split(this.delimiter);
@@ -138,20 +138,23 @@ class DelimitedText {
       return obj;
     }));
   }
-  async *readLines(f=(x=>x)) {
+  async *readLines(f = (x=>x)) {
     let handle = await lib.fs.promises.open(this.path);
     for await (const line of handle.readLines()) {
       yield f(line);
     }
     handle.close();
   }
-  writeArray(data, keys) {
+  async writeArray(data, keys = this.keys) {
     let writer = lib.fs.createWriteStream(this.path);
     data.forEach(x=>{
       let line = keys.map(k=>(k instanceof Function)?k(x):x[k]).join(this.delimiter);
       writer.write(line);
     });
-    writer.close();
+    let closeCallback;
+    let waitClose = new Promise(r=>closeCallback=r);
+    writer.close(closeCallback);
+    await waitClose;
   }
 }
 
