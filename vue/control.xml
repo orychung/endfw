@@ -22,7 +22,7 @@
             <span v-if="od.sorting?.column===c">&nbsp;({{ od.sorting?.desc?'desc':'asc' }})</span>
           </box>
         </grid-heading>
-        <grid-row v-for="d,i in (od.filter.mapArray() || []).reduce((p,x)=>p.filterArray(x), od.data)">
+        <grid-row v-for="d,i in (od.filter?.mapArray() || []).reduce((p,x)=>p.filterArray(x), od.data)">
           <box v-for="c in od.columns" :class="c.class"
             @click="c.onclick?.(d)"
             >{{ c.display(d) }}</box>
