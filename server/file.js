@@ -41,7 +41,7 @@ class FileSegment {
   }
   static errorCallback(res, e, defaultCode, defaultMessage) {
     console.error(e);
-    if (!res.closed) res.returner.jsonError(defaultCode, defaultMessage);
+    res.returner.jsonError(defaultCode, defaultMessage);
   }
   constructor(options = {}) {
     this.basePath = options.basePath;

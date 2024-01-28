@@ -150,7 +150,7 @@ class Returner {
 	closeHead(httpCode, extraHeader) {
 		if (this.headClosed) {
 			console.warn('Returner header is previously closed. Ignore this closeHead call.');
-			return;
+			return false;
 		}
 		Object.assign(this.addHeader, extraHeader);
 		this.res.writeHead(httpCode, this.addHeader);
@@ -178,7 +178,7 @@ class Returner {
     if (resourcePath) {
       this.closeHead(200, {
         "Content-Type": "application/octet-stream",
-        "Content-Disposition" : "attachment; filename=" + encodeURIComponent(fileName || path.basename(resourcePath))
+        "Content-Disposition": "attachment; filename=" + encodeURIComponent(fileName || path.basename(resourcePath))
       });
       fs.createReadStream(resourcePath).pipe(this.res);
     }
@@ -248,7 +248,7 @@ class Returner {
   }
   error(code=400, message, data=null, mimeType='text/html') {
     this.server.log('['+code+'] '+message);
-    this.closeHead(code, {'Content-Type': 'text/html'});
+    if (!this.closeHead(code, {'Content-Type': 'text/html'})) return;
     this.res.end(data);
   }
 	xmlError(code, message, data) {this.error(code, message, data, 'text/xml');}
