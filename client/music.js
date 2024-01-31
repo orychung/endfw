@@ -175,10 +175,16 @@ class MusicalBuffer extends MusicalItem {
     this.bufferEventListeners.push({type, listener});
     this.buffer.addEventListener(type, listener);
   }
-  async loadFile(file) {
+  async load(input) {
+    if (input.arrayBuffer) {
+      input = await input.arrayBuffer();
+      this.filename = input.name;
+    }
     this.stop();
-    this.audioData = (await this.ctx.decodeAudioData((await file.arrayBuffer())));
-    this.filename = file.name;
+    this.audioData = await this.ctx.decodeAudioData(input);
+  }
+  loadFile(file) {
+    return this.load(file);
   }
   restart(when, offset, duration) {
     this.stop();
