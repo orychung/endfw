@@ -23,9 +23,10 @@
           </box>
         </grid-heading>
         <grid-row v-for="d,i in (od.filter?.mapArray() || []).reduce((p,x)=>p.filterArray(x), od.data)">
-          <box v-for="c in od.columns" :class="c.class"
-            @click="c.onclick?.(d)"
-            >{{ c.display(d) }}</box>
+          <box v-for="c in od.columns" :class="c.class" @click="c.onclick?.(d)">
+            <template v-if="c.display">{{ c.display(d) }}</template>
+            <component v-else :is="c.template" :od="{grid: od, column: c, row: d}"></template>
+          </box>
         </grid-row>
       </grid-layout>
     </vueTemplate>
