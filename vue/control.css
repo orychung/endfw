@@ -33,3 +33,6 @@ grid-heading {
 grid-row > :first-child, grid-heading > :first-child {
   grid-column-start: 1;
 }
+vueTemplate {
+  display: none;
+}

@@ -74,6 +74,14 @@ Vue.endAddOn.createApp = function(options) {
       computed: allComputed,
       methods: allMethods,
       data: ()=>Object({all: globalThis.all}),
+      errorCaptured(error, compInst, errorInfo) {
+        console.error("error: ", error);
+        console.error("compInst: ", compInst);
+        console.error("errorInfo: ", errorInfo);
+        console.log("Get component with error by: Vue.endAddOn.errorCompInst");
+        Vue.endAddOn.errorCompInst = compInst;
+        return false;
+      },
     });
     allTemplates.forEach(x=>app.component(x.id, x.details));
     app.directive('focus', {
