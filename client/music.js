@@ -206,6 +206,7 @@ class MusicalBuffer extends MusicalItem {
   }
   stop() {
     if (!this.buffer) return;
+    this.buffer.stop();
     this.buffer.disconnect();
     delete this.buffer;
   }
