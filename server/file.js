@@ -147,10 +147,10 @@ class DelimitedText {
   }
   async writeArray(data, keys = this.keys) {
     let writer = lib.fs.createWriteStream(this.path);
-    data.forEach(x=>{
+    for await (const x of data) {
       let line = keys.map(k=>(k instanceof Function)?k(x):x[k]).join(this.delimiter);
-      writer.write(line);
-    });
+      writer.write(line+'\n');
+    };
     let closeCallback;
     let waitClose = new Promise(r=>closeCallback=r);
     writer.close(closeCallback);
