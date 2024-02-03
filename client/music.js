@@ -173,7 +173,7 @@ class MusicalBuffer extends MusicalItem {
   }
   addEventListener(type, listener) {
     this.bufferEventListeners.push({type, listener});
-    this.buffer.addEventListener(type, listener);
+    if (this.buffer) this.buffer.addEventListener(type, listener);
   }
   async load(input) {
     if (input.arrayBuffer) {
