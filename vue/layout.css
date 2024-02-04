@@ -2,6 +2,12 @@
 .absolute {
   position: absolute;
 }
+.full-size {
+  width: 100%; height: 100%;
+}
+.full-size.absolute {
+  left: 0px; top: 0px;
+}
 .pointer {
   cursor: pointer;
 }

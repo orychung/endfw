@@ -9,7 +9,7 @@ HTMLCanvasElement.defineMethod('ctx', {
 HTMLCanvasElement.defineMethod('clearImage', function clearImage() {
   this.ctx.clearRect(0, 0, this.width, this.height);
 });
-HTMLCanvasElement.defineMethod('loadFile', function loadFile(src, options) {
+HTMLCanvasElement.defineMethod('loadFile', function loadFile(src, options={}) {
   if (src instanceof File) {
     if (!browse) throw 'shortcuts.js is required to load a File to canvas!';
     src = browse.file.dataURL(src);
@@ -33,7 +33,7 @@ HTMLCanvasElement.defineMethod('predictFileSize', function predictFileSize(forma
   let commaPosition = dataURL.indexOf(',');
   return (dataURL.length-commaPosition-1)/4*3 - (dataURL.slice(-2).split('=').length-1);
 });
-HTMLCanvasElement.defineMethod('downloadAsFile', function downloadAsFile(options) {
+HTMLCanvasElement.defineMethod('downloadAsFile', function downloadAsFile(options={}) {
   if (!browse) throw 'shortcuts.js is required!';
   let format = options.format??'image/png';
   let quality = options.quality??1;
