@@ -1,5 +1,7 @@
 // must include builtin.js
 
+function quotient(a, b) {return (a - a % b) / b;}
+
 var combin = Object();
 combin.nCr = function(n, r) {
     if ((n >= 0) && (n < 2*r)) r = n - r;
