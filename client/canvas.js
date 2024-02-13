@@ -18,9 +18,13 @@ HTMLCanvasElement.defineMethod('loadFile', function loadFile(src, options={}) {
     let canvas = this;
     let img = new Image();
     img.onload = function() {
-      canvas.height = options.height ||　img.height;
-      canvas.width = options.width ||　img.width;
-      canvas.ctx.drawImage(img, 0, 0, canvas.width, canvas.width);
+      let scale = Math.min(
+        (options.maxHeight || options.height || img.height)/img.height,
+        (options.maxWidth || options.width || img.width)/img.width,
+      );
+      canvas.height = options.height ||　(scale * img.height);
+      canvas.width = options.width ||　(scale * img.width);
+      canvas.ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       s();
     };
     Promise.resolve(src).then(src=>{
