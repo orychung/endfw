@@ -116,7 +116,7 @@ class FileSegment {
         this.doneCallback(res, undefined);
       });
       if (req.p) {
-        writeStream.write(req.p.data);
+        writeStream.write(req.p.data, req.p.dataEncoding??'UTF8');
         writeStream.end();
         this.doneCallback(res, undefined);
       } else {
