@@ -160,9 +160,6 @@ if ('jQuery' in globalThis) Object.defineMethod('$', {
 String.defineMethod('likeRE', function likeRE(re) {
   return (this.search(new RegExp('^'+re+'$')) >= 0);
 });
-String.defineMethod('splitNum', function splitNum(delimiter) {
-  return (this.split(delimiter).map(x => parseInt(x)));
-});
 
 // custom
 JSON.serialCopy = function(obj) {return JSON.parse(JSON.stringify(obj));}
@@ -219,7 +216,6 @@ var builtin_doc = {
   },
   String: {
     likeRE: "analog of SQL like, changed to use RE as pattern",
-    splitNum: "split but added parseInt",
   },
   JSON: {
     serialCopy: "copy object by stringify and parse",

@@ -6,7 +6,7 @@ A minimalist JS framework library for browser and node.js framework
 1. Extension of JS built-in types (see builtin_doc of builtin.js)
     1. Object: attr, filterArray, filterObject, mapArray, mapObject, mapKeyValue, reduce, etc
     1. Array: fromAsync, lookupOf, sortBy, shuffle
-    1. String: likeRE, splitNum
+    1. String: likeRE
 1. Common JS utilities (/common)
 1. Web client JS shortcuts (/client)
 1. Node.js server utilities (/server)

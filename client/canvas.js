@@ -9,7 +9,7 @@ HTMLCanvasElement.defineMethod('ctx', {
 HTMLCanvasElement.defineMethod('clearImage', function clearImage() {
   this.ctx.clearRect(0, 0, this.width, this.height);
 });
-HTMLCanvasElement.defineMethod('loadFile', function loadFile(src, options) {
+HTMLCanvasElement.defineMethod('loadFile', function loadFile(src, options={}) {
   if (src instanceof File) {
     if (!browse) throw 'shortcuts.js is required to load a File to canvas!';
     src = browse.file.dataURL(src);
@@ -18,9 +18,13 @@ HTMLCanvasElement.defineMethod('loadFile', function loadFile(src, options) {
     let canvas = this;
     let img = new Image();
     img.onload = function() {
-      canvas.height = options.height ||　img.height;
-      canvas.width = options.width ||　img.width;
-      canvas.ctx.drawImage(img, 0, 0, canvas.width, canvas.width);
+      let scale = Math.min(
+        (options.maxHeight || options.height || img.height)/img.height,
+        (options.maxWidth || options.width || img.width)/img.width,
+      );
+      canvas.height = options.height ||　(scale * img.height);
+      canvas.width = options.width ||　(scale * img.width);
+      canvas.ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       s();
     };
     Promise.resolve(src).then(src=>{
@@ -33,7 +37,7 @@ HTMLCanvasElement.defineMethod('predictFileSize', function predictFileSize(forma
   let commaPosition = dataURL.indexOf(',');
   return (dataURL.length-commaPosition-1)/4*3 - (dataURL.slice(-2).split('=').length-1);
 });
-HTMLCanvasElement.defineMethod('downloadAsFile', function downloadAsFile(options) {
+HTMLCanvasElement.defineMethod('downloadAsFile', function downloadAsFile(options={}) {
   if (!browse) throw 'shortcuts.js is required!';
   let format = options.format??'image/png';
   let quality = options.quality??1;

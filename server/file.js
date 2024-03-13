@@ -112,10 +112,16 @@ class FileSegment {
       let writeStream = lib.fs.createWriteStream(path);
       writeStream.on('error', e=>this.errorCallback(res, e, 400, "unknown failure"));
       req.on('end', ()=>{
-        this.doneCallback(res, undefined);
         writeStream.end();
+        this.doneCallback(res, undefined);
       });
-      req.pipe(writeStream);
+      if (req.p) {
+        writeStream.write(req.p.data, req.p.dataEncoding??'UTF8');
+        writeStream.end();
+        this.doneCallback(res, undefined);
+      } else {
+        req.pipe(writeStream);
+      }
       return;
     }
     catch (e) { return this.errorCallback(res, e, 400, "unknown failure"); }
