@@ -22,8 +22,8 @@ HTMLCanvasElement.defineMethod('loadFile', function loadFile(src, options={}) {
         (options.maxHeight || options.height || img.height)/img.height,
         (options.maxWidth || options.width || img.width)/img.width,
       );
-      canvas.height = options.height ||　(scale * img.height);
-      canvas.width = options.width ||　(scale * img.width);
+      canvas.height = options.height || (scale * img.height);
+      canvas.width = options.width || (scale * img.width);
       canvas.ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       s();
     };

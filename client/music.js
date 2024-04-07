@@ -177,8 +177,8 @@ class MusicalBuffer extends MusicalItem {
   }
   async load(input) {
     if (input.arrayBuffer) {
-      input = await input.arrayBuffer();
       this.filename = input.name;
+      input = await input.arrayBuffer();
     }
     this.stop();
     this.audioData = await this.ctx.decodeAudioData(input);
