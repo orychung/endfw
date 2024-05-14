@@ -2,6 +2,17 @@
 .absolute {
   position: absolute;
 }
+.flex-center {
+  align-items: center;
+  justify-items: center;
+  justify-content: center;
+}
+.flex-remain {
+  flex-grow: 100;
+}
+.flex-stretch {
+  align-items: stretch;
+}
 .full-size {
   width: 100%; height: 100%;
 }
@@ -13,21 +24,13 @@
 }
 
 /* layout tags */
-flex-layout {
+flex-layout, .flex {
   display: flex;
 }
-flex-layout.flex-center {
-  align-items: center;
-  justify-items: center;
-  justify-content: center;
-}
-flex-layout.flex-stretch {
-  align-items: stretch;
-}
-flex-layout.col {
+flex-layout.col, .flex.col {
   flex-direction: column;
 }
-flex-layout.row {
+flex-layout.row, .flex.row {
   flex-direction: row;
 }
 flex-layout.hscroll {
@@ -37,7 +40,4 @@ flex-layout.hscroll {
 flex-layout.vscroll {
   overflow: auto;
   max-height: 100%;
-}
-flex-layout > .flex-remain {
-  flex-grow: 100;
 }

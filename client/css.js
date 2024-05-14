@@ -1,5 +1,4 @@
 // must include jquery.js
-// must include quick_tool.js
 
 function regIdHandlers() {
   var gThis;
@@ -25,33 +24,16 @@ function regIdHandlers() {
 }
 
 function setCssEvents() {
-  /* hiding items not to be visualised */
-  /* no item in scope */
-  
-  /* activate use of default button */
-  $('.has_default_button').each(function(index) {
-    $(this).keypress(function(ke) {
-      if (ke.key === 'Enter') {
-        ke.preventDefault();
-        $('#'+$(this).attr('default_button')).click();
-      }
-    })
-  });
-  
-  /* responsive sizing */
-  window.onresize = function() {
-    $('div.frame.main').each(function(index){
-      $(this).css('max-height', Math.max(window.visualViewport.height, parseInt($(this).css('min-height')))+'px');
-      $(this).css('max-width', Math.max(window.visualViewport.width, parseInt($(this).css('min-width')))+'px');
-    });
-  };
-  
-  /* set WIP text */
-  $('[class="#WIP"]').each(function(index){
-    $(this).html('(WIP: ' + $(this).parent().attr('class') + ')');
-  });
+  console.error('setCssEvents is deprecated to favour use of vue');
 }
 
-function flowDiv(type, items=[], useClass='') {return '<div class="'+useClass+' frame flex_'+type+'">'+items.join('')+'</div>';}
-function tableOfRows(rows, useClass='') {return '<table class="'+useClass+'"><tbody>'+rows.join('')+'</tbody></table>';}
-function rowOfCells(cells, eid='') {return '<tr eid="'+eid+'"><td>'+cells.join('</td><td>')+'</td></tr>';}
+function flowDiv(type, items=[], useClass='') {
+  console.error('flowDiv is deprecated to favour use of vue');
+}
+
+function tableOfRows(rows, useClass='') {
+  console.error('tableOfRows is deprecated to favour use of vue');
+}
+function rowOfCells(cells, eid='') {
+  console.error('rowOfCells is deprecated to favour use of vue');
+}
