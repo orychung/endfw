@@ -1,7 +1,7 @@
 // must include jquery.js
 
 function initModal() {
-    $('flex-layout.modal').hide();
+    $('div.modal').hide();
     $('screen-layer.cover').hide();
     var covers = $('screen-layer.cover');
     covers.off('keydown');
@@ -11,13 +11,13 @@ function initModal() {
 }
 
 function hideModalCover(cover) {
-    $(cover).find('flex-layout.modal').hide();
+    $(cover).find('div.modal').hide();
     $(cover).hide();
 }
 
 function showModal(modalId) {
-    // $('flex-layout.modal').hide();
-    var modal = $('flex-layout.modal#'+modalId);
+    // $('div.modal').hide();
+    var modal = $('div.modal#'+modalId);
     modal.show();
     var cover = modal.parents('.cover');
     cover.show();
@@ -25,7 +25,7 @@ function showModal(modalId) {
 }
 
 function showAlert(caption, message) {
-    var modal = $('flex-layout.modal#modal_alert');
+    var modal = $('div.modal#modal_alert');
     modal.find('.modal_caption p')[0].innerHTML = caption;
     modal.find('.modal_body')[0].innerHTML = message;
     modal.find('button.modal_button_ok').off('click');
@@ -35,7 +35,7 @@ function showAlert(caption, message) {
     showModal('modal_alert');
 }
 function showInputText(caption, message, defaultValue='', validation) {
-    var modal = $('flex-layout.modal#modal_input_text');
+    var modal = $('div.modal#modal_input_text');
     var textBox = modal.find('.modal_body input[type=text]');
     textBox[0].value = defaultValue;
     modal.find('.modal_caption p')[0].innerHTML = caption;
@@ -52,7 +52,7 @@ function showInputText(caption, message, defaultValue='', validation) {
     textBox[0].focus();
 }
 function showInputSelect(caption, message, options=[], defaultValue='', validation) {
-    var modal = $('flex-layout.modal#modal_input_select');
+    var modal = $('div.modal#modal_input_select');
     var selectBox = modal.find('.modal_body select');
     selectBox[0].innerHTML = options.map(x=>'<option value="'+x[0]+'">'+x[1]+'</option>').join('');
     selectBox[0].value = defaultValue;
@@ -66,7 +66,7 @@ function showInputSelect(caption, message, options=[], defaultValue='', validati
     selectBox[0].focus();
 }
 function showInputRange(caption, message, min=0, max=1, defaultValue=min, validation) {
-    var modal = $('flex-layout.modal#modal_input_range');
+    var modal = $('div.modal#modal_input_range');
     var slider = modal.find('.modal_body input[type=range]');
     var textBox = modal.find('.modal_body input[type=text]');
     slider[0].min = min;

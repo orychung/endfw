@@ -2,6 +2,26 @@
 .absolute {
   position: absolute;
 }
+.flex {
+  display: flex;
+}
+.flex.col {
+  flex-direction: column;
+}
+.flex.row {
+  flex-direction: row;
+}
+.flex-center {
+  align-items: center;
+  justify-items: center;
+  justify-content: center;
+}
+.flex-remain {
+  flex-grow: 100;
+}
+.flex-stretch {
+  align-items: stretch;
+}
 .full-size {
   width: 100%; height: 100%;
 }
@@ -11,33 +31,11 @@
 .pointer {
   cursor: pointer;
 }
-
-/* layout tags */
-flex-layout {
-  display: flex;
-}
-flex-layout.flex-center {
-  align-items: center;
-  justify-items: center;
-  justify-content: center;
-}
-flex-layout.flex-stretch {
-  align-items: stretch;
-}
-flex-layout.col {
-  flex-direction: column;
-}
-flex-layout.row {
-  flex-direction: row;
-}
-flex-layout.hscroll {
+.scroll-h {
   overflow: auto;
   max-width: 100%;
 }
-flex-layout.vscroll {
+.scroll-v {
   overflow: auto;
   max-height: 100%;
-}
-flex-layout > .flex-remain {
-  flex-grow: 100;
 }
