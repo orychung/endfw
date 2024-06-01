@@ -5,6 +5,9 @@
 .flex {
   display: flex;
 }
+.flex.child-grow > * {
+  flex-grow: 1;
+}
 .flex.col {
   flex-direction: column;
 }

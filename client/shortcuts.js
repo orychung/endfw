@@ -124,12 +124,21 @@ var browse = {
     (new URL(document.URL)).searchParams.forEach((x,i)=>query[i] = x);
     return query;
   },
-  updateQuery: function(query) {
+  setQuery: function(query) {
     window.history.pushState(
       query,
-      "", // unused param
+      "", // unused param: https://developer.mozilla.org/en-US/docs/Web/API/History/pushState#unused
       document.URL.split('?')[0]+'?'+new URLSearchParams(query).toString()
     );
+  },
+  updateQuery: function(updatesOrKey, value) {
+    let query = browse.currentQuery();
+    if (typeof updatesOrKey == 'string' || updatesOrKey instanceof String) {
+      query[updatesOrKey] = value;
+    } else {
+      Object.assign(query, updatesOrKey);
+    }
+    return browse.setQuery(query);
   },
   file: {
     async _get(method, ...args) {
