@@ -68,9 +68,8 @@ Vue.endAddOn.createApp = function(options) {
       template: x.innerHTML,
     };
   });
-  let app;
-  options.mountSelectors.forEach(selector=>{
-    app = Vue.createApp({
+  return options.mountSelectors.map(selector=>{
+    let app = Vue.createApp({
       computed: allComputed,
       methods: allMethods,
       data: ()=>Object({all: globalThis.all}),
@@ -92,6 +91,6 @@ Vue.endAddOn.createApp = function(options) {
       }
     });
     globalThis.all = app.mount(selector).all;
+    return app;
   });
-  return app;
 };
