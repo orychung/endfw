@@ -35,16 +35,20 @@ class Server {
     })
     return fields.join(';');
   }
-  cspHeaderSets = {}
+  cspHeaderSets = {};
   constructor(options = {}) {
-    this.project = options.project || 'noProject';
-    this.domain = options.domain || 'localhost';
-    this.port = options.port || 443;
-    this.context = options.context || '';
+    this.project = options.project ?? 'noProject';
+    this.domain = options.domain ?? 'localhost';
+    this.port = options.port ?? 443;
+    this.context = options.context ?? '';
+    this.headerSets = options.headerSets ?? {};
+    this.headerSets.default ??= {
+      "X-Frame-Options": "SAMEORIGIN",
+    };
     
-    this.log = options.log || (()=>{});
-    this.peerDisposal = options.peerDisposal || (()=>{});
-    this.cookieSecret = options.cookieSecret || '<abc>this is the secret</abc>';
+    this.log = options.log ?? (()=>{});
+    this.peerDisposal = options.peerDisposal ?? (()=>{});
+    this.cookieSecret = options.cookieSecret ?? '<abc>this is the secret</abc>';
     this.cspHeaderSets.default = Server.compileCspHeader(
       options.cspDirectives
       || JSON.serialCopy(Server.defaultCspDirectives));
@@ -129,11 +133,12 @@ Server.cbNotFound = function(ret, filePath) {
 };
 
 class Returner {
+  addHeader = {};
+  headClosed = false;
+  headerSet = 'default';
   constructor(res, server) {
     this.res = res;
     this.server = server;
-		this.addHeader = {};
-		this.headClosed = false;
     this.variableAssignment = {};
     this.variablePlaceholder = (name) => '[['+name+']]';
   }
@@ -153,6 +158,7 @@ class Returner {
 			return false;
 		}
 		Object.assign(this.addHeader, extraHeader);
+    Object.assign(this.addHeader, this.server.headerSets[this.headerSet]);
 		this.res.writeHead(httpCode, this.addHeader);
 		this.headClosed = true;
     return this;
@@ -248,7 +254,7 @@ class Returner {
   }
   error(code=400, message, data=null, mimeType='text/html') {
     this.server.log('['+code+'] '+message);
-    if (!this.closeHead(code, {'Content-Type': 'text/html'})) return;
+    if (!this.closeHead(code, {'Content-Type': mimeType})) return;
     this.res.end(data);
   }
 	xmlError(code, message, data) {this.error(code, message, data, 'text/xml');}
@@ -271,8 +277,7 @@ class Returner {
     this.error(code, message, JSON.stringify(data), mimeType);
   }
   json(data=Object(), code=200, mimeType='application/json') {
-    this.closeHead(code, {'Content-Type': mimeType});
-    this.res.end(JSON.stringify(data));
+    this.success(JSON.stringify(data), code, mimeType);
   }
 }
 
