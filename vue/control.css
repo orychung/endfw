@@ -1,3 +1,6 @@
+combo[type=range_slider] > input[type=text]  {
+  border-radius: 2px;
+}
 contextmenu {
   position: absolute;
   display: block;
