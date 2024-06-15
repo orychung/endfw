@@ -1,5 +1,4 @@
 "use strict";
-// must include lib/jquery.js (or equivalent)
 // must include lib/vue.global.prod.js (or equivalent)
 // must include client/shortcuts.js
 
@@ -41,9 +40,11 @@ Vue.endAddOn.useBasicMethods = function useBasicMethods() {
 
 Vue.endAddOn.loadTemplateURLs = async function loadTemplateURLs(...templateURLs) {
 try {
+  let parser = new DOMParser();
   for (var i=0;i<templateURLs.length;i++) {
-    let templatesFound = Array.from($(await http.get(templateURLs[i])).find('vueTemplate'));
-    Vue.endAddOn.templates = Vue.endAddOn.templates.concat(templatesFound);
+    let xml = parser.parseFromString(await http.get(templateURLs[i]), 'application/xml');
+    let templates = Array.from(xml.querySelectorAll('vueTemplate'));
+    Vue.endAddOn.templates.push(...templates);
   }
 } catch (e) {console.log(e);}
 }
@@ -100,11 +101,11 @@ Vue.endAddOn.createApp = function(options) {
   await Vue.endAddOn.loadTemplateURLs(
     vueRoot + 'control.xml'
   );
-  Vue.endAddOn.templates.push(...Array.from($('vueTemplate')).map(x=>Object({
+  let templates = Array.from(document.querySelectorAll('vueTemplate'));
+  Vue.endAddOn.templates.push(...templates.map(x=>Object({
     id: x.id,
     type: x.type,
     innerHTML: x.innerHTML,
   })));
-  Array.from($('vueTemplate')).forEach(x=>{x.outerHTML = `<!--vueTemplate[id=${x.id}] digested by quick_vue.js-->`;});
-  Vue.endAddOn.useBasicMethods();
+  templates.forEach(x=>{x.outerHTML = `<!--vueTemplate[id=${x.id}] digested by quick_vue.js-->`;});
 })();

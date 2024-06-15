@@ -20,7 +20,7 @@ httpBase.toQueryString = function toQueryString(data, keyPath=null) {
       - child param, key is keyPath[PARAM_KEY]
   */
   return Object.keys(data).map(k=>{
-    var newKeyPath = encodeURIComponent(k);
+    let newKeyPath = encodeURIComponent(k);
     if (keyPath) newKeyPath = keyPath+'%5B'+newKeyPath+'%5D';
     if (data[k] instanceof Object) return httpBase.toQueryString(data[k], newKeyPath);
     return newKeyPath+'='+encodeURIComponent(data[k]);
@@ -28,12 +28,13 @@ httpBase.toQueryString = function toQueryString(data, keyPath=null) {
 };
 var http = new Proxy(httpBase, {
   async apply(target, thisArg, args) {
-    var url = args[0];
+    let url = args[0];
+    let resp;
     if (target===httpBase) {
-      var options = args[1];
-      var resp = await fetch(url, options);
+      let options = args[1];
+      resp = await fetch(url, options);
     } else {
-      var body = args[1];
+      let body = args[1];
       if (['GET','HEAD'].includes(target.options.method)) {
         delete target.options.headers['Content-Type'];
         if (body != null) url = url+'?'+httpBase.toQueryString(body);
@@ -43,9 +44,9 @@ var http = new Proxy(httpBase, {
         }
         if (body != null) target.options.body = body;
       }
-      var resp = await fetch(url, target.options);
+      resp = await fetch(url, target.options);
     }
-    var result = resp;
+    let result = resp;
     if (!result.ok) return result;
     if (target.localOptions.returnType == 'asText') {
       result = await result.text();
@@ -53,9 +54,9 @@ var http = new Proxy(httpBase, {
     }
     if (target.localOptions.returnType == 'asBinary') result = await result.arrayBuffer();
     if (target.localOptions.returnType == 'asDownload') {
-      var data = await result.arrayBuffer();
-      var filename;
-      var dispositionHeader = result.headers.get('Content-Disposition');
+      let data = await result.arrayBuffer();
+      let filename;
+      let dispositionHeader = result.headers.get('Content-Disposition');
       if (dispositionHeader) filename = dispositionHeader.split('=')[1];
       if (!filename) filename = url.substring(url.lastIndexOf('/') + 1);
       return browse.download(data, filename);
@@ -68,7 +69,7 @@ var http = new Proxy(httpBase, {
   },
   get(target, prop, receiver) {
     if (prop in target) return target[prop];
-    var thisArg;
+    let thisArg;
     if (target===httpBase) {
       thisArg = ()=>{console.error('Unexpected!')};
       thisArg.options = JSON.parse(JSON.stringify(httpBase.defaultOptions));
@@ -100,13 +101,13 @@ var http = new Proxy(httpBase, {
 
 var browse = {
   newTab: function(url) {
-    var a1 = document.createElement('a');
+    let a1 = document.createElement('a');
     a1.href = url;
     a1.target = '_blank';
     a1.click();
   },
   download: function(data, filename) {
-    var a1 = document.createElement('a');
+    let a1 = document.createElement('a');
     a1.href=URL.createObjectURL(new Blob([data]));
     a1.download = filename;
     a1.click();
@@ -120,7 +121,7 @@ var browse = {
     a1.click();
   },
   currentQuery: function() {
-    var query = {};
+    let query = {};
     (new URL(document.URL)).searchParams.forEach((x,i)=>query[i] = x);
     return query;
   },
