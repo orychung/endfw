@@ -42,7 +42,7 @@ Vue.endAddOn.loadTemplateURLs = async function loadTemplateURLs(...templateURLs)
 try {
   let parser = new DOMParser();
   for (var i=0;i<templateURLs.length;i++) {
-    let xml = parser.parseFromString(await http.get(templateURLs[i]), 'application/xml');
+    let xml = parser.parseFromString(await http.get(templateURLs[i]), 'text/html');
     let templates = Array.from(xml.querySelectorAll('vueTemplate'));
     Vue.endAddOn.templates.push(...templates);
   }
@@ -51,11 +51,9 @@ try {
 
 Vue.endAddOn.createApp = function(options) {
   if (!options.mountSelectors) return console.error('mountSelectors must be specified');
-  let allComputed = Object.assign({}, Vue.endAddOn.commonComputed);
-  if (options.computed) Object.assign(allComputed, options.computed);
-  let allMethods = Object.assign({}, Vue.endAddOn.commonMethods);
-  if (options.methods) Object.assign(allMethods, options.methods);
-  let allTemplates = options.templates || Vue.endAddOn.templates || [];
+  let allComputed = Object.assign({}, Vue.endAddOn.commonComputed, options.computed);
+  let allMethods = Object.assign({}, Vue.endAddOn.commonMethods, options.methods);
+  let allTemplates = options.templates ?? Vue.endAddOn.templates;
   allTemplates.forEach(x=>{
     let templateType = x.type?Vue.endAddOn.templateTypes[x.type]:{};
     let allComputed = Object.assign({}, Vue.endAddOn.commonComputed, templateType.computed);
