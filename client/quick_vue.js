@@ -1,6 +1,6 @@
 "use strict";
-// must include client/shortcuts.js
 // must include lib/vue.global.prod.js (or equivalent)
+// must include client/shortcuts.js
 
 Vue.endAddOn = {
   templates: [],
@@ -40,27 +40,25 @@ Vue.endAddOn.useBasicMethods = function useBasicMethods() {
 
 Vue.endAddOn.loadTemplateURLs = async function loadTemplateURLs(...templateURLs) {
 try {
+  let parser = new DOMParser();
   for (var i=0;i<templateURLs.length;i++) {
-    let templatesFound = Array.from($(await http.get(templateURLs[i])).find('vueTemplate'));
-    Vue.endAddOn.templates = Vue.endAddOn.templates.concat(templatesFound);
+    let xml = parser.parseFromString(await http.get(templateURLs[i]), 'text/html');
+    let templates = Array.from(xml.querySelectorAll('vueTemplate'));
+    Vue.endAddOn.templates.push(...templates);
   }
 } catch (e) {console.log(e);}
 }
 
 Vue.endAddOn.createApp = function(options) {
   if (!options.mountSelectors) return console.error('mountSelectors must be specified');
-  let allComputed = Object.assign({}, Vue.endAddOn.commonComputed);
-  if (options.computed) Object.assign(allComputed, options.computed);
-  let allMethods = Object.assign({}, Vue.endAddOn.commonMethods);
-  if (options.methods) Object.assign(allMethods, options.methods);
-  let allTemplates = options.templates || Vue.endAddOn.templates || [];
+  let allComputed = Object.assign({}, Vue.endAddOn.commonComputed, options.computed);
+  let allMethods = Object.assign({}, Vue.endAddOn.commonMethods, options.methods);
+  let allTemplates = options.templates ?? Vue.endAddOn.templates;
   allTemplates.forEach(x=>{
-    let allComputed = Object.assign({}, Vue.endAddOn.commonComputed);
-    if (x.type) Object.assign(allComputed, Vue.endAddOn.templateTypes[x.type].computed);
-    let allMethods = Object.assign({}, Vue.endAddOn.commonMethods);
-    if (x.type) Object.assign(allMethods, Vue.endAddOn.templateTypes[x.type].methods);
-    let allProps = [].concat(Vue.endAddOn.commonProps);
-    if (x.type) allProps = allProps.concat(Vue.endAddOn.templateTypes[x.type].props);
+    let templateType = x.type?Vue.endAddOn.templateTypes[x.type]:{};
+    let allComputed = Object.assign({}, Vue.endAddOn.commonComputed, templateType.computed);
+    let allMethods = Object.assign({}, Vue.endAddOn.commonMethods, templateType.methods);
+    let allProps = [].concat(Vue.endAddOn.commonProps).concat(templateType.props??[]);
     x.details = {
       computed: allComputed,
       props: allProps,
@@ -94,3 +92,18 @@ Vue.endAddOn.createApp = function(options) {
     return app;
   });
 };
+
+// auto register built-in templates and local templates
+(async ()=>{
+  let vueRoot = document.currentScript.src.replace('/client/quick_vue.js','/vue/');
+  await Vue.endAddOn.loadTemplateURLs(
+    vueRoot + 'control.xml'
+  );
+  let templates = Array.from(document.querySelectorAll('vueTemplate'));
+  Vue.endAddOn.templates.push(...templates.map(x=>Object({
+    id: x.id,
+    type: x.type,
+    innerHTML: x.innerHTML,
+  })));
+  templates.forEach(x=>{x.outerHTML = `<!--vueTemplate[id=${x.id}] digested by quick_vue.js-->`;});
+})();
