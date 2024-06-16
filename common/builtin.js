@@ -180,6 +180,34 @@ JSON.listify = function(objBody, objName, index) {
   }
 }
 
+// custom
+Promise.wrap = function wrap(promise) {
+  let target = {status: 'pending'};
+  let promiseArray = [];
+  promiseArray.push(new Promise((resolve, reject)=>{Object.assign(target, {resolve, reject})}));
+  if (promise !== undefined) promiseArray.push(promise);
+  promiseArray.convert(x=>x.then(
+    result=>{
+      target.status = 'fulfilled';
+      target.result = result;
+      return result;
+    },
+    reason=>{
+      target.status = 'rejected';
+      target.result = reason;
+      throw reason;
+    }
+  ));
+  let returnPromise = Promise.race(promiseArray);
+  Object.assign(returnPromise, {
+    get resolve() {return target.resolve},
+    get reject() {return target.reject},
+    get status() {return target.status},
+    get result() {return target.result},
+  })
+  return returnPromise;
+}
+
 // documentation about what is done
 var builtin_doc = {
   Function: {
@@ -220,6 +248,9 @@ var builtin_doc = {
   JSON: {
     serialCopy: "copy object by stringify and parse",
     listify: "output JSON as a list",
+  },
+  Promise: {
+    wrap: "Promise constructor with resolve / reject / status / result exposed",
   },
 }
 
