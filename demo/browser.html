@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Unit Test Browser Page</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="stylesheet" type="text/css" href="../vue/control.css" />
+<link rel="stylesheet" type="text/css" href="../vue/layout.css" />
+<script type="text/javascript" src="../lib/vue.global.prod.js"></script>
+<script type="text/javascript" src="../common/builtin.js"></script>
+<script type="text/javascript" src="../common/global.js"></script>
+<script type="text/javascript" src="../client/shortcuts.js"></script>
+<script type="text/javascript" src="../client/quick_vue.js"></script>
+<style>
+table {
+  border: 0.1px solid #444;
+  border-spacing: 0px;
+}
+th,td {
+  border: 0.1px solid #888;
+  text-align: center;
+}
+td.green {color: green;}
+td.red {color: red;}
+</style>
+<script type="text/javascript" id="test">
+async function runTests() {
+  let outcomeFile, outcomeFeature, status;
+  
+  outcomeFile = 'common/builtin';
+  all.ui.outcome.touch(outcomeFile, {green: 0, red: 0, failures: []});
+  
+  outcomeFeature = 'Promise.wrap';
+  status = '';
+  let p111 = Promise.wrap();
+  let p11 = Promise.wrap(p111);
+  let p1 = Promise.wrap(p11);
+  p1.then(r=>status+=`p1r=${r}.`, e=>status+=`p1e=${e}.`);
+  p11.then(r=>status+=`p11r=${r}.`, e=>status+=`p11e=${e}.`);
+  p111.then(r=>status+=`p111r=${r}.`, e=>status+=`p111e=${e}.`);
+  p1.resolve('r1');
+  p111.reject('e1');
+  await Promise.allSettled([p1,p11,p111]);
+  if (status=='p1r=r1.p111e=e1.p11e=e1.') {
+    all.ui.outcome[outcomeFile].green++;
+  } else {
+    all.ui.outcome[outcomeFile].red++;
+    all.ui.outcome[outcomeFile].failures.push(outcomeFeature);
+  };
+}
+</script>
+<script type="text/javascript" id="main">
+async function initPage() {
+  g.ui = {
+    themeFaceHue: 120,
+    outcome: {},
+    contextmenus: [],
+  };
+  globalThis.all = g;
+  
+  await Vue.endAddOn.ready;
+  Vue.endAddOn.useBasicMethods();
+  window.apps = Vue.endAddOn.createApp({
+    mountSelectors: ['#screen'],
+  });
+  
+  await Vue.nextTick();
+  runTests();
+}
+</script>
+</head>
+<body onload="initPage();">
+<vueTemplates>
+<vueTemplate id="v-screen">
+  <div style="padding: 5px;">
+    <table>
+    <thead>
+      <th>File</th>
+      <th>Passed</th>
+      <th>Failed</th>
+      <th>Features Failed</th>
+    </thead>
+    <tbody>
+      <tr v-for="v,k in all.ui.outcome">
+        <td>{{ k }}</td>
+        <td class="green">{{ v.green }}</td>
+        <td class="red">{{ v.red }}</td>
+        <td class="red">
+          <ul>
+            <li v-for="failure in v.failures">{{ failure }}</li>
+          </ul>
+        </td>
+      </tr>
+    </tbody>
+    </table>
+  </div>
+  <screen-layer style="--base-z-index:20;">
+    <t-cover :all="all"></t-cover>
+    <t-contextmenu :all="all" :w="all.ui.contextmenus"></t-contextmenu>
+  </screen-layer>
+</vueTemplate>
+</vueTemplates>
+<div id="screen" class="flex row flex-stretch full-size">
+  <v-screen :all="all"><h3>Loading Vue framework...</h3></v-screen>
+</div>
+</body>
+</html>
