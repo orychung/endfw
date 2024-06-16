@@ -1,5 +1,6 @@
 "use strict";
 // must include lib/vue.global.prod.js (or equivalent)
+// must include common/builtin.js
 // must include client/shortcuts.js
 
 Vue.endAddOn = {
@@ -16,6 +17,7 @@ Vue.endAddOn = {
       map: local map/dictionary
   */
   templateTypes: {},
+  ready: Promise.resolve(),
 };
 
 Vue.endAddOn.basicMethods = {
@@ -95,6 +97,8 @@ Vue.endAddOn.createApp = function(options) {
 
 // auto register built-in templates and local templates
 (async ()=>{
+  let loadingDone = Promise.wrap();
+  Vue.endAddOn.ready = Promise.all([Vue.endAddOn.ready, loadingDone]);
   let vueRoot = document.currentScript.src.replace('/client/quick_vue.js','/vue/');
   await Vue.endAddOn.loadTemplateURLs(
     vueRoot + 'control.xml'
@@ -106,4 +110,5 @@ Vue.endAddOn.createApp = function(options) {
     innerHTML: x.innerHTML,
   })));
   templates.forEach(x=>{x.outerHTML = `<!--vueTemplate[id=${x.id}] digested by quick_vue.js-->`;});
+  loadingDone.resolve();
 })();
