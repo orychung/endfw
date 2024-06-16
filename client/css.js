@@ -1,5 +1,3 @@
-// must include jquery.js
-
 function regIdHandlers() {
   var gThis;
   try {
@@ -17,8 +15,8 @@ function regIdHandlers() {
       'focus',
       'change', 'input'
     ].includes(eventType)) {
-      $('#'+objectId).off(eventType);
-      $('#'+objectId).on(eventType, gThis[handler]);
+      // use of jQuery is removed, no longer able to refresh the event handler
+      document.querySelector('#'+objectId).addEventListener(eventType, gThis[handler]);
     }
   })
 }
