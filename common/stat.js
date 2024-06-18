@@ -1,6 +1,4 @@
-// must include builtin.js
-
-function quotient(a, b) {return (a - a % b) / b;}
+// must include common/builtin.js
 
 var combin = Object();
 combin.nCr = function(n, r) {
@@ -73,7 +71,7 @@ class pmf {
     drawResult(draw, min, max) {
         // binary search
         if (max <= min) return min;
-        var mid = quotient(max + min, 2);
+        var mid = Math.trunc(max + min / 2);
         if (draw > this.unsortedCDF[mid][0]) {
             return this.drawResult(draw, mid + 1, max);
         } else {
@@ -110,6 +108,7 @@ if (typeof module === 'undefined') {
     // skip if not running node
 } else {
     module.exports = {
+        Accumulator: Accumulator,
         combin: combin,
         pmf: pmf,
     }

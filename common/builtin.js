@@ -163,6 +163,7 @@ String.defineMethod('likeRE', function likeRE(re) {
 
 // custom
 JSON.serialCopy = function(obj) {return JSON.parse(JSON.stringify(obj));}
+// TODO: deprecate this feature, turn to from UI by vue/control.xml
 JSON.listify = function(objBody, objName, index) {
   let prefix = '<b>'+objName+((index==null)?'':('['+index+']'))+': </b>'
   try {
