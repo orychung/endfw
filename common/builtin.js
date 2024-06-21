@@ -163,23 +163,6 @@ String.defineMethod('likeRE', function likeRE(re) {
 
 // custom
 JSON.serialCopy = function(obj) {return JSON.parse(JSON.stringify(obj));}
-// TODO: deprecate this feature, turn to from UI by vue/control.xml
-JSON.listify = function(objBody, objName, index) {
-  let prefix = '<b>'+objName+((index==null)?'':('['+index+']'))+': </b>'
-  try {
-    if (objBody instanceof Array) {
-      return objBody.map((x,i)=>'<li>'+JSON.listify(x, objName, i)+'</li>').join('').slice(4, -5);
-    } else if (objBody instanceof Object && objBody['mapArray'] instanceof Function) {
-      return prefix+'<ul>'+objBody.mapArray((x,i)=>'<li>'+JSON.listify(x, i)+'</li>').join('')+'</ul>';
-    } else {
-      return prefix+amp_encode(''+objBody);
-    }
-  } catch (e) {
-    JSON.listify.lastError = e;
-    console.warn('Excpetion when handling objBody:', objBody);
-    return prefix+('(non-string object)');
-  }
-}
 
 // custom
 Promise.wrap = function wrap(promise) {
@@ -248,7 +231,6 @@ var builtin_doc = {
   },
   JSON: {
     serialCopy: "copy object by stringify and parse",
-    listify: "output JSON as a list",
   },
   Promise: {
     wrap: "Promise constructor with resolve / reject / status / result exposed",

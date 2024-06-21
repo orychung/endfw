@@ -101,7 +101,8 @@ Vue.endAddOn.createApp = function(options) {
   Vue.endAddOn.ready = Promise.all([Vue.endAddOn.ready, loadingDone]);
   let vueRoot = document.currentScript.src.replace('/client/quick_vue.js','/vue/');
   await Vue.endAddOn.loadTemplateURLs(
-    vueRoot + 'control.xml'
+    vueRoot + 'control.xml',
+    vueRoot + 'recursive.xml',
   );
   let templates = Array.from(document.querySelectorAll('vueTemplate'));
   Vue.endAddOn.templates.push(...templates.map(x=>Object({
