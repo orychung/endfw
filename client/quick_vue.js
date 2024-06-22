@@ -4,7 +4,6 @@
 // must include client/shortcuts.js
 
 Vue.endAddOn = {
-  templates: [],
   commonComputed: {},
   commonMethods: {},
   commonProps: ['all', 'cfg', 'od', 'i', 'w', 'map'],
@@ -16,8 +15,9 @@ Vue.endAddOn = {
       w:   container
       map: local map/dictionary
   */
+  rootPath: document.currentScript.src.replace('/client/quick_vue.js','/vue/'),
+  templates: [],
   templateTypes: {},
-  ready: Promise.resolve(),
 };
 
 Vue.endAddOn.basicMethods = {
@@ -96,10 +96,8 @@ Vue.endAddOn.createApp = function(options) {
 };
 
 // auto register built-in templates and local templates
-(async ()=>{
-  let loadingDone = Promise.wrap();
-  Vue.endAddOn.ready = Promise.all([Vue.endAddOn.ready, loadingDone]);
-  let vueRoot = document.currentScript.src.replace('/client/quick_vue.js','/vue/');
+Vue.endAddOn.load = async function load() {
+  let vueRoot = Vue.endAddOn.rootPath;
   await Vue.endAddOn.loadTemplateURLs(
     vueRoot + 'control.xml',
     vueRoot + 'recursive.xml',
@@ -111,5 +109,4 @@ Vue.endAddOn.createApp = function(options) {
     innerHTML: x.innerHTML,
   })));
   templates.forEach(x=>{x.outerHTML = `<!--vueTemplate[id=${x.id}] digested by quick_vue.js-->`;});
-  loadingDone.resolve();
-})();
+};
