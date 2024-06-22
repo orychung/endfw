@@ -1,0 +1,20 @@
+<vueTemplates>
+  <vueTemplate id="t-recursive-list">
+    <template v-if="od.body instanceof Array">
+      <li v-for="x,i in od.body">
+        <t-recursive-list :od="{body: x, name: od.name, index: i}">
+        </t-recursive-list>
+      </li>
+    </template>
+    <template v-else>
+      <b>{{ od.name }}{{ (od.index!==undefined)?`[${od.index}]`:'' }}:</b>
+      <ul v-if="od.body instanceof Object">
+        <li v-for="x,i in od.body">
+          <t-recursive-list :od="{body: x, name: i}">
+          </t-recursive-list>
+        </li>
+      </ul>
+      <template v-else>{{ od.body }}</template>
+    </template>
+  </vueTemplate>
+</vueTemplates>
