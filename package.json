@@ -25,7 +25,7 @@
   },
   "devDependencies": {},
   "name": "endfw",
-  "version": "0.5.1",
+  "version": "0.7.1",
   "description": "A minimalist JS framework library for browser and node.js framework",
   "directories": {
     "lib": "lib"
