@@ -71,7 +71,7 @@ class pmf {
     drawResult(draw, min, max) {
         // binary search
         if (max <= min) return min;
-        var mid = Math.trunc(max + min / 2);
+        var mid = Math.trunc((max + min) / 2);
         if (draw > this.unsortedCDF[mid][0]) {
             return this.drawResult(draw, mid + 1, max);
         } else {
