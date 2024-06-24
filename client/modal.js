@@ -1,13 +1,51 @@
-// must include jquery.js
+class ModalScreen {
+  static ACTION = {
+    CANCEL: {name: 'Cancel', call: function(od){ this.dismiss(); }},
+    OK: {name: 'OK', call: function(od){ this.dismiss(); }},
+  }
+  actions = []
+  constructor(data) {
+    Object.assign(this, data);
+    // od for underlying data
+    // caption for screen caption
+    // vueTemplate for custom template
+  }
+  dismiss() {
+    all.ui.modals.splice(this.index - 1, 1);
+    this.ondismiss?.();
+    delete this.index;
+  }
+  show() {
+    this.index = all.ui.modals.push(this);
+  }
+}
+
+function showAlert(caption, message) {
+  let dismiss = Promise.wrap();
+  new ModalScreen({
+    caption: caption,
+    message: message,
+    actions: [ModalScreen.ACTION.OK],
+    cssClass: 'alert',
+    ondismiss: ()=>dismiss.resolve(),
+  }).show();
+  return dismiss;
+}
+
+function showInput(caption, message, forms, od) {
+  
+  // return promise
+  // reject if cancelled
+}
 
 function initModal() {
     $('div.modal').hide();
-    $('screen-layer.cover').hide();
-    var covers = $('screen-layer.cover');
+    $('screen-layer.grey-cover').hide();
+    var covers = $('screen-layer.grey-cover');
     covers.off('keydown');
     covers.on('keydown', function(e) {if(e.key === "Escape") hideModalCover(this);});
     $('button.modal_button_cancel').off('click');
-    $('button.modal_button_cancel').on('click', function(e) {hideModalCover($(this).parents('.cover')[0]);});
+    $('button.modal_button_cancel').on('click', function(e) {hideModalCover($(this).parents('.grey-cover')[0]);});
 }
 
 function hideModalCover(cover) {
@@ -19,30 +57,20 @@ function showModal(modalId) {
     // $('div.modal').hide();
     var modal = $('div.modal#'+modalId);
     modal.show();
-    var cover = modal.parents('.cover');
+    var cover = modal.parents('.grey-cover');
     cover.show();
     cover[0].focus();
 }
 
-function showAlert(caption, message) {
-    var modal = $('div.modal#modal_alert');
-    modal.find('.modal_caption p')[0].innerHTML = caption;
-    modal.find('.modal_body')[0].innerHTML = message;
-    modal.find('button.modal_button_ok').off('click');
-    modal.find('button.modal_button_ok').on('click', function(e) {
-        hideModalCover(modal.parents('.cover')[0]);
-    });
-    showModal('modal_alert');
-}
 function showInputText(caption, message, defaultValue='', validation) {
     var modal = $('div.modal#modal_input_text');
-    var textBox = modal.find('.modal_body input[type=text]');
+    var textBox = modal.find('.modal-body input[type=text]');
     textBox[0].value = defaultValue;
-    modal.find('.modal_caption p')[0].innerHTML = caption;
-    modal.find('.modal_body p')[0].innerHTML = message;
+    modal.find('.modal-caption p')[0].innerHTML = caption;
+    modal.find('.modal-body p')[0].innerHTML = message;
     modal.find('button.modal_button_ok').off('click');
     modal.find('button.modal_button_ok').on('click', function(e) {
-        if (validation(textBox[0].value)) hideModalCover(modal.parents('.cover')[0]);
+        if (validation(textBox[0].value)) hideModalCover(modal.parents('.grey-cover')[0]);
     });
     showModal('modal_input_text');
     textBox.off('keydown');
@@ -53,31 +81,31 @@ function showInputText(caption, message, defaultValue='', validation) {
 }
 function showInputSelect(caption, message, options=[], defaultValue='', validation) {
     var modal = $('div.modal#modal_input_select');
-    var selectBox = modal.find('.modal_body select');
+    var selectBox = modal.find('.modal-body select');
     selectBox[0].innerHTML = options.map(x=>'<option value="'+x[0]+'">'+x[1]+'</option>').join('');
     selectBox[0].value = defaultValue;
-    modal.find('.modal_caption p')[0].innerHTML = caption;
-    modal.find('.modal_body p')[0].innerHTML = message;
+    modal.find('.modal-caption p')[0].innerHTML = caption;
+    modal.find('.modal-body p')[0].innerHTML = message;
     modal.find('button.modal_button_ok').off('click');
     modal.find('button.modal_button_ok').on('click', function(e) {
-        if (validation(selectBox[0].value)) hideModalCover(modal.parents('.cover')[0]);
+        if (validation(selectBox[0].value)) hideModalCover(modal.parents('.grey-cover')[0]);
     });
     showModal('modal_input_select');
     selectBox[0].focus();
 }
 function showInputRange(caption, message, min=0, max=1, defaultValue=min, validation) {
     var modal = $('div.modal#modal_input_range');
-    var slider = modal.find('.modal_body input[type=range]');
-    var textBox = modal.find('.modal_body input[type=text]');
+    var slider = modal.find('.modal-body input[type=range]');
+    var textBox = modal.find('.modal-body input[type=text]');
     slider[0].min = min;
     slider[0].max = max;
     slider[0].value = defaultValue;
     textBox[0].value = defaultValue;
-    modal.find('.modal_caption p')[0].innerHTML = caption;
-    modal.find('.modal_body p')[0].innerHTML = message;
+    modal.find('.modal-caption p')[0].innerHTML = caption;
+    modal.find('.modal-body p')[0].innerHTML = message;
     modal.find('button.modal_button_ok').off('click');
     modal.find('button.modal_button_ok').on('click', function(e) {
-        if (validation(textBox[0].value)) hideModalCover(modal.parents('.cover')[0]);
+        if (validation(textBox[0].value)) hideModalCover(modal.parents('.grey-cover')[0]);
     });
     showModal('modal_input_range');
     slider.off('input'); slider.on('input', function(e) {textBox[0].value = slider[0].value;});

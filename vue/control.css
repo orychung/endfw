@@ -39,3 +39,52 @@ grid-row > :first-child, grid-heading > :first-child {
 vueTemplate {
   display: none;
 }
+
+.grey-cover {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,.3);
+  pointer-events: unset;
+}
+.modal {
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  background-color: #ffffff;
+  box-shadow: 0 0 20px black; /* (h-offset, v-offset, blur-size, size-adjust) */
+  width: 400px;
+  p {
+    flex: 10 1 100%;
+  }
+}
+.modal-action {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  padding: 5px;
+  user-select: none;
+  button {
+    padding: 5px 10px;
+    margin: 5px;
+    background: hsl(var(--theme-face-hue, 240), 80%, 80%);
+  }
+}
+.modal-body {
+  width: 100%;
+  display: flex;
+  flex-flow: row wrap;
+  padding: 5px 10px;
+  min-height: 80px;
+  align-items: start;
+}
+.modal-caption {
+  background: hsl(var(--theme-face-hue, 240), 80%, 80%);
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  width: 100%;
+  padding: 10px;
+  font-weight: bold;
+  font-size: 14px;
+  user-select: none;
+}
