@@ -20,7 +20,7 @@
       <grid-heading>
         <div v-for="c in od.columns" @click="od.column$click?.(c)">
           <span>{{ c.heading }}</span>
-          <span v-if="od.sorting?.column===c">&nbsp;({{ od.sorting?.desc?'desc':'asc' }})</span>
+          <span v-if="od.sorting?.column===c">{{ od.sorting?.desc?'▼':'▲' }}</span>
         </div>
       </grid-heading>
       <grid-row
@@ -37,7 +37,9 @@
 </group>
 <group id="modal">
   <vueTemplate id="t-modal">
-    <screen-layer v-for="modal,i in w" class="grey-cover" v-focus tabIndex="0">
+    <screen-layer class="grey-cover" tabIndex="0"
+      v-for="modal,i in w" v-focus
+      @keydown.esc="modal.dismiss()">
       <div class="modal" :class="modal.cssClass">
         <div class="modal-caption"><p>{{ modal.caption }}</p></div>
         <div class="modal-body">
@@ -67,7 +69,7 @@
 </group>
 <group id="sliders">
   <vueTemplate id="t-range-slider">
-    <combo type="range_slider">
+    <combo type="range-slider">
       <div class="slider">
         <input type="range" min="0" max="1" value="1" class="outer-bar"></input>
         <input type="range" min="0" max="1" value="1" class="inner-bar"

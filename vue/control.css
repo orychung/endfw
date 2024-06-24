@@ -1,6 +1,58 @@
-combo[type=range_slider] > input[type=text]  {
-  border-radius: 2px;
+
+combo[type=range-slider] {
+  display: flex;
+  position: relative;
+  width: 170px;
+  height: 20px;
+  align-items: center;
+  --text-width: 20px;
+  div.slider {
+    flex: 100 0 var(--text-width);
+    height: 100%;
+    margin: 0px 6px;
+  }
+  input[type=text] {
+    width: var(--text-width);
+    padding: 0px;
+    text-align: center;
+    border-radius: 2px;
+  }
+  input[type=range] {
+    position: absolute;
+    height: 6px;
+    width: 100%;
+    bottom: 5px;
+    background: none;
+    -webkit-appearance: none;
+    border-radius: 10px;
+    outline: none;
+    &.outer-bar {background: #DDDDDD;}
+    &.inner-bar {background: #AAAAAA;}
+  }
+  input[type=range]::-webkit-slider-thumb {
+    background: hsl(var(--theme-face-hue, 240), 70%, 50%);
+    -webkit-appearance: none;
+    cursor: pointer;
+    border-radius: 50%; 
+    width: 12px;
+    height: 12px;
+    transition: background .5s;
+  }
+  input[type=range].min::-webkit-slider-thumb {
+    width: 10px;
+    height: 10px;
+  }
+  input[type=range].outer-bar::-webkit-slider-thumb,
+  input[type=range].inner-bar::-webkit-slider-thumb {
+    background: none;
+    width: 10px;
+    height: 10px;
+  }
+  input[type=range]:hover::-webkit-slider-thumb {
+    background: hsl(var(--theme-face-hue, 240), 100%, 20%);
+  }
 }
+
 contextmenu {
   position: absolute;
   display: block;
@@ -18,6 +70,7 @@ contextmenu-button {
 contextmenu-button:hover {
   background: hsl(var(--theme-face-hue),30%,90%);
 }
+
 grid-layout {
   display: grid;
   /* grid-auto-columns: auto; */
@@ -26,16 +79,17 @@ grid-layout {
   grid-template-columns: repeat(50, auto);
   grid-template-rows: repeat(50, auto);
 }
-grid-row {
-  display: contents;
-}
 grid-heading {
-  display: contents;
   font-weight: bold;
+  user-select: none;
 }
-grid-row > :first-child, grid-heading > :first-child {
-  grid-column-start: 1;
+grid-row, grid-heading {
+  display: contents;
+  > :first-child {
+    grid-column-start: 1;
+  }
 }
+
 vueTemplate {
   display: none;
 }

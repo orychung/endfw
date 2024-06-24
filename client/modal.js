@@ -3,6 +3,21 @@ class ModalScreen {
     CANCEL: {name: 'Cancel', call: function(od){ this.dismiss(); }},
     OK: {name: 'OK', call: function(od){ this.dismiss(); }},
   }
+  static showAlert(options) {
+    let dismiss = Promise.wrap();
+    let screenOptions = Object.assign({
+      actions: [ModalScreen.ACTION.OK],
+      cssClass: 'alert',
+      ondismiss: ()=>dismiss.resolve(),
+    }, options)
+    new ModalScreen(screenOptions).show();
+    return dismiss;
+  }
+  static showInput(options) {
+    
+    // return promise
+    // reject if cancelled
+  }
   actions = []
   constructor(data) {
     Object.assign(this, data);
@@ -18,24 +33,6 @@ class ModalScreen {
   show() {
     this.index = all.ui.modals.push(this);
   }
-}
-
-function showAlert(caption, message) {
-  let dismiss = Promise.wrap();
-  new ModalScreen({
-    caption: caption,
-    message: message,
-    actions: [ModalScreen.ACTION.OK],
-    cssClass: 'alert',
-    ondismiss: ()=>dismiss.resolve(),
-  }).show();
-  return dismiss;
-}
-
-function showInput(caption, message, forms, od) {
-  
-  // return promise
-  // reject if cancelled
 }
 
 function initModal() {
