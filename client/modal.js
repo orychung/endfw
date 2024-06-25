@@ -1,7 +1,11 @@
 class ModalScreen {
   static ACTION = {
-    CANCEL: {name: 'Cancel', call: function(od){ this.dismiss(); }},
-    OK: {name: 'OK', call: function(od){ this.dismiss(); }},
+    CANCEL: {name: 'Cancel', key: 'Escape',
+             call: function(od){ this.dismiss(); }},
+    CLOSE: {name: 'Close', key: 'Escape',
+             call: function(od){ this.dismiss(); }},
+    OK: {name: 'OK', key: 'Enter',
+         call: function(od){ this.dismiss(); }},
   }
   static showAlert(options) {
     let dismiss = Promise.wrap();
@@ -14,9 +18,29 @@ class ModalScreen {
     return dismiss;
   }
   static showInput(options) {
-    
-    // return promise
-    // reject if cancelled
+    let submit = Promise.wrap();
+    let screenOptions = Object.assign({
+      actions: [
+        ModalScreen.ACTION.CANCEL,
+        {
+          name: options.submitActionName??'OK',
+          key: 'Enter',
+          call: function(od){
+            if (!(options.validate?.(od)===undefined)) return;
+            submit.resolve(od); this.dismiss();
+          }
+        },
+      ],
+      ondismiss: ()=>submit.reject(),
+    }, options);
+    if (options.od==undefined) {
+      screenOptions.od = options.fields.reduce((p,field,k)=>{
+        p[k] = field.default;
+        return p;
+      }, Object());
+    }
+    new ModalScreen(screenOptions).show();
+    return submit;
   }
   actions = []
   constructor(data) {
@@ -29,6 +53,9 @@ class ModalScreen {
     all.ui.modals.splice(this.index - 1, 1);
     this.ondismiss?.();
     delete this.index;
+  }
+  onkeydown(e) {
+    this.actions.filter(a=>a.key==e.key)[0]?.call.bind(this)(this.od);
   }
   show() {
     this.index = all.ui.modals.push(this);
@@ -59,37 +86,6 @@ function showModal(modalId) {
     cover[0].focus();
 }
 
-function showInputText(caption, message, defaultValue='', validation) {
-    var modal = $('div.modal#modal_input_text');
-    var textBox = modal.find('.modal-body input[type=text]');
-    textBox[0].value = defaultValue;
-    modal.find('.modal-caption p')[0].innerHTML = caption;
-    modal.find('.modal-body p')[0].innerHTML = message;
-    modal.find('button.modal_button_ok').off('click');
-    modal.find('button.modal_button_ok').on('click', function(e) {
-        if (validation(textBox[0].value)) hideModalCover(modal.parents('.grey-cover')[0]);
-    });
-    showModal('modal_input_text');
-    textBox.off('keydown');
-    textBox.on('keydown', function(e) {
-        if(e.key === "Enter") modal.find('button.modal_button_ok').click();
-    });
-    textBox[0].focus();
-}
-function showInputSelect(caption, message, options=[], defaultValue='', validation) {
-    var modal = $('div.modal#modal_input_select');
-    var selectBox = modal.find('.modal-body select');
-    selectBox[0].innerHTML = options.map(x=>'<option value="'+x[0]+'">'+x[1]+'</option>').join('');
-    selectBox[0].value = defaultValue;
-    modal.find('.modal-caption p')[0].innerHTML = caption;
-    modal.find('.modal-body p')[0].innerHTML = message;
-    modal.find('button.modal_button_ok').off('click');
-    modal.find('button.modal_button_ok').on('click', function(e) {
-        if (validation(selectBox[0].value)) hideModalCover(modal.parents('.grey-cover')[0]);
-    });
-    showModal('modal_input_select');
-    selectBox[0].focus();
-}
 function showInputRange(caption, message, min=0, max=1, defaultValue=min, validation) {
     var modal = $('div.modal#modal_input_range');
     var slider = modal.find('.modal-body input[type=range]');

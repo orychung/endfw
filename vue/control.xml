@@ -39,20 +39,22 @@
   <vueTemplate id="t-modal">
     <screen-layer class="grey-cover" tabIndex="0"
       v-for="modal,i in w" v-focus
-      @keydown.esc="modal.dismiss()">
+      @keydown="modal.onkeydown($event)">
       <div class="modal" :class="modal.cssClass">
         <div class="modal-caption"><p>{{ modal.caption }}</p></div>
-        <div class="modal-body">
+        <div class="modal-body" v-focus>
           <component v-if="modal.vueTemplate" :is="modal.vueTemplate" :od="modal.od"></component>
           <template v-else>
             <p v-if="modal.message">{{ modal.message }}</p>
             <grid-layout v-if="modal.forms">
               <div class="contents" v-for="form in modal.forms">
-                <grid-row v-for="field in form">
-                  <label>{{ field.name }}</label>
-                  <input :type="field.type" v-modal="modal.od[field.bind]"></input>
-                </grid-row>
+                <t-modal-field v-for="k in form.keyList"
+                  :od="modal.od" :i="k" :cfg="modal.fields[k]"></t-modal-field>
               </div>
+            </grid-layout>
+            <grid-layout v-else>
+              <t-modal-field v-for="field,k in modal.fields"
+                :od="modal.od" :i="k" :cfg="field"></t-modal-field>
             </grid-layout>
           </template>
         </div>
@@ -66,25 +68,36 @@
       </div>
     </screen-layer>
   </vueTemplate>
+  <vueTemplate id="t-modal-field">
+    <grid-row>
+      <label>
+        {{ cfg.name }}
+        <select v-if="cfg.type=='select'" :name="i" v-model="od[i]">
+          <option v-for="option,k in cfg.options" :value="k">{{ option }}</option>
+        </select>
+        <input v-else :name="i" :type="cfg.type" v-model="od[i]"></input>
+      </label>
+    </grid-row>
+  </vueTemplate>
 </group>
 <group id="sliders">
   <vueTemplate id="t-range-slider">
     <combo type="range-slider">
       <div class="slider">
-        <input type="range" min="0" max="1" value="1" class="outer-bar"></input>
-        <input type="range" min="0" max="1" value="1" class="inner-bar"
+        <input type="range" :name="cfg.name+'-bar-outer'" min="0" max="1" value="1" class="outer-bar"></input>
+        <input type="range" :name="cfg.name+'-bar-inner'" min="0" max="1" value="1" class="inner-bar"
           :style="{
             left: 'calc(100% * '+(od.min-cfg.min)/(cfg.max-cfg.min)+')',
             width: 'calc(100% * '+(od.max-od.min)/(cfg.max-cfg.min)+')'
           }"></input>
-        <input type="range" :min="cfg.min" :max="cfg.max" v-model="od.max" class="max"></input>
-        <input type="range" :min="cfg.min" :max="od.mid" v-model="od.min" class="min"
+        <input type="range" :name="cfg.name+'-range-max'" :min="cfg.min" :max="cfg.max" v-model="od.max" class="max"></input>
+        <input type="range" :name="cfg.name+'-range-min'" :min="cfg.min" :max="od.mid" v-model="od.min" class="min"
           :style="{
             width: 'calc(100% * '+(od.mid-cfg.min)/(cfg.max-cfg.min)+')'
           }"></input>
       </div>
-      <input type="text" class="min" v-model="od.min"></input>
-      <input type="text" class="max" v-model="od.max"></input>
+      <input type="text" :name="cfg.name+'-min'" class="min" v-model="od.min"></input>
+      <input type="text" :name="cfg.name+'-max'" class="max" v-model="od.max"></input>
     </combo>
   </vueTemplate>
 </group>
