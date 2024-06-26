@@ -1,55 +1,110 @@
 <vueTemplates>
-  <group id="contextmenu">
-    <vueTemplate id="t-contextmenu">
-      <contextmenu v-for="(menu,i) in w" v-focus tabindex="-1" @focusout="w.splice(i,1);"
-        :style="{
-          left: menu.x+'px',
-          top: menu.y+'px',
-        }">
-        <contextmenu-button v-for="button in menu.buttons.filter(b=>(b.visible==undefined)||b.visible.apply(menu.od))"
-          @click="button.click.apply(menu.od); w.splice(i,1);">
-          <span>{{ button.text }}</span>
-        </contextmenu-button>
-      </contextmenu>
-    </vueTemplate>
-  </group>
-  <group id="grid">
-    <vueTemplate id="t-list-grid">
-      <grid-layout :class="od.class">
-        <grid-heading>
-          <div v-for="c in od.columns" @click="od.column$click?.(c)">
-            <span>{{ c.heading }}</span>
-            <span v-if="od.sorting?.column===c">&nbsp;({{ od.sorting?.desc?'desc':'asc' }})</span>
-          </div>
-        </grid-heading>
-        <grid-row v-for="d,i in (od.filter?.mapArray() || []).reduce((p,x)=>p.filterArray(x), od.data)">
-          <div v-for="c in od.columns" :class="c.class" @click="c.onclick?.(d)">
-            <template v-if="c.display">{{ c.display(d) }}</template>
-            <component v-else :is="c.template" :od="{grid: od, column: c, row: d}" :all="all"></template>
-          </div>
-        </grid-row>
-      </grid-layout>
-    </vueTemplate>
-  </group>
-  <group id="sliders">
-    <vueTemplate id="t-range-slider">
-      <combo type="range_slider">
-        <div class="slider">
-          <input type="range" min="0" max="1" value="1" class="outer-bar"></input>
-          <input type="range" min="0" max="1" value="1" class="inner-bar"
-            :style="{
-              left: 'calc(100% * '+(od.min-cfg.min)/(cfg.max-cfg.min)+')',
-              width: 'calc(100% * '+(od.max-od.min)/(cfg.max-cfg.min)+')'
-            }"></input>
-          <input type="range" :min="cfg.min" :max="cfg.max" v-model="od.max" class="max"></input>
-          <input type="range" :min="cfg.min" :max="od.mid" v-model="od.min" class="min"
-            :style="{
-              width: 'calc(100% * '+(od.mid-cfg.min)/(cfg.max-cfg.min)+')'
-            }"></input>
+<group id="contextmenu">
+  <vueTemplate id="t-contextmenu">
+    <contextmenu v-for="(menu,i) in w" v-focus tabindex="-1" @focusout="w.splice(i,1);"
+      :style="{
+        left: menu.x+'px',
+        top: menu.y+'px',
+      }">
+      <contextmenu-button
+        v-for="button in menu.buttons.filter(b=>(b.visible==undefined)||b.visible.apply(menu.od))"
+        @click="button.click.apply(menu.od); w.splice(i,1);">
+        <span>{{ button.text }}</span>
+      </contextmenu-button>
+    </contextmenu>
+  </vueTemplate>
+</group>
+<group id="grid">
+  <vueTemplate id="t-list-grid">
+    <grid-layout :class="od.class">
+      <grid-heading>
+        <div v-for="c in od.columns" @click="od.column$click?.(c)">
+          <span>{{ c.heading }}</span>
+          <span v-if="od.sorting?.column===c">{{ od.sorting?.desc?'▼':'▲' }}</span>
         </div>
-        <input type="text" class="min" v-model="od.min"></input>
-        <input type="text" class="max" v-model="od.max"></input>
-      </combo>
-    </vueTemplate>
-  </group>
+      </grid-heading>
+      <grid-row
+        v-for="d,i in (od.filter?.mapArray() || []).reduce((p,x)=>p.filterArray(x), od.data)"
+        @click="d.onclick?.($event)"
+        @contextmenu="showContextmenu(d, $event)">
+        <div v-for="c in od.columns" :class="c.class" @click="c.onclick?.(d)">
+          <template v-if="c.display">{{ c.display(d) }}</template>
+          <component v-else :is="c.template" :od="{grid: od, column: c, row: d}" :all="all"></component>
+        </div>
+      </grid-row>
+    </grid-layout>
+  </vueTemplate>
+</group>
+<group id="modal">
+  <vueTemplate id="t-modal">
+    <screen-layer class="grey-cover" tabIndex="0"
+      v-for="modal,i in w" v-focus
+      @keydown="modal.onkeydown($event)">
+      <div class="modal" :class="modal.cssClass">
+        <div class="modal-caption"><p>{{ modal.caption }}</p></div>
+        <div class="modal-body" v-focus>
+          <component v-if="modal.vueTemplate" :is="modal.vueTemplate" :od="modal.od"></component>
+          <template v-else>
+            <p v-if="modal.message" class="modal-message">{{ modal.message }}</p>
+            <grid-layout v-if="modal.forms">
+              <div class="contents" v-for="form in modal.forms">
+                <t-modal-field v-for="k in form.keyList"
+                  :od="modal.od" :i="k" :cfg="modal.fields[k]"></t-modal-field>
+              </div>
+            </grid-layout>
+            <grid-layout v-else>
+              <t-modal-field v-for="field,k in modal.fields"
+                :od="modal.od" :i="k" :cfg="field"></t-modal-field>
+            </grid-layout>
+          </template>
+        </div>
+        <div class="modal-action">
+          <p>&nbsp;</p>
+          <button
+            v-for="action in modal.actions"
+            @click.stop="action.call.bind(modal)(modal.od)">
+            {{ action.name }}</button>
+        </div>
+      </div>
+    </screen-layer>
+  </vueTemplate>
+  <vueTemplate id="t-modal-field">
+    <grid-row>
+      <label :for="i">{{ cfg.name }}&nbsp;</label>
+      <div v-if="cfg.type=='range'">
+        <input type="range" :name="i" v-model="od[i]"
+          :max="cfg.max" :min="cfg.min"
+          style="margin-right: 10px;"></input>
+        <input type="number" :name="i+'-text'" v-model="od[i]"
+          :max="cfg.max" :min="cfg.min"
+          :style="{width:cfg.max.toString().length+1.5+'em'}"></input>
+      </div>
+      <select v-else-if="cfg.type=='select'" :name="i" v-model="od[i]">
+        <option v-for="option,k in cfg.options" :value="k">{{ option }}</option>
+      </select>
+      <input v-else :name="i" :type="cfg.type" :size="cfg.size" v-model="od[i]"></input>
+    </grid-row>
+  </vueTemplate>
+</group>
+<group id="sliders">
+  <vueTemplate id="t-range-slider">
+    <combo type="range-slider">
+      <div class="slider">
+        <input type="range" :name="cfg.name+'-bar-outer'" min="0" max="1" value="1" class="outer-bar"></input>
+        <input type="range" :name="cfg.name+'-bar-inner'" min="0" max="1" value="1" class="inner-bar"
+          :style="{
+            left: 'calc(100% * '+(od.min-cfg.min)/(cfg.max-cfg.min)+')',
+            width: 'calc(100% * '+(od.max-od.min)/(cfg.max-cfg.min)+')'
+          }"></input>
+        <input type="range" :name="cfg.name+'-range-max'" :min="cfg.min" :max="cfg.max" v-model="od.max" class="max"></input>
+        <input type="range" :name="cfg.name+'-range-min'" :min="cfg.min" :max="od.mid" v-model="od.min" class="min"
+          :style="{
+            width: 'calc(100% * '+(od.mid-cfg.min)/(cfg.max-cfg.min)+')'
+          }"></input>
+      </div>
+      <input type="text" :name="cfg.name+'-min'" class="min" v-model="od.min"></input>
+      <input type="text" :name="cfg.name+'-max'" class="max" v-model="od.max"></input>
+    </combo>
+  </vueTemplate>
+</group>
 </vueTemplates>

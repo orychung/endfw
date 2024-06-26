@@ -21,18 +21,23 @@ Vue.endAddOn = {
 };
 
 Vue.endAddOn.basicMethods = {
-  showContextmenu(od,e) {
+  showContextmenu(od, e, options) {
     // no menu if od is not an object
-    if (!(od instanceof Object)) return;
+    if (!(od instanceof Object)) return false;
+    const menuButtons = options?.menuButtons ??
+                        od.menuButtons ??
+                        od.constructor.menuButtons;
+    if (menuButtons===undefined) return false;
     all.ui.activeElementBeforeContextmenu = document.activeElement;
     all.ui.contextmenus.push({
       x: e.pageX,
       y: e.pageY,
       od: od,
-      buttons: od.menuButtons || od.constructor.menuButtons,
+      buttons: menuButtons,
     });
     e.stopPropagation();
     e.preventDefault();
+    return true;
   },
 }
 
