@@ -45,7 +45,7 @@
         <div class="modal-body" v-focus>
           <component v-if="modal.vueTemplate" :is="modal.vueTemplate" :od="modal.od"></component>
           <template v-else>
-            <p v-if="modal.message">{{ modal.message }}</p>
+            <p v-if="modal.message" class="modal-message">{{ modal.message }}</p>
             <grid-layout v-if="modal.forms">
               <div class="contents" v-for="form in modal.forms">
                 <t-modal-field v-for="k in form.keyList"
@@ -70,13 +70,19 @@
   </vueTemplate>
   <vueTemplate id="t-modal-field">
     <grid-row>
-      <label>
-        {{ cfg.name }}
-        <select v-if="cfg.type=='select'" :name="i" v-model="od[i]">
-          <option v-for="option,k in cfg.options" :value="k">{{ option }}</option>
-        </select>
-        <input v-else :name="i" :type="cfg.type" v-model="od[i]"></input>
-      </label>
+      <label :for="i">{{ cfg.name }}&nbsp;</label>
+      <div v-if="cfg.type=='range'">
+        <input type="range" :name="i" v-model="od[i]"
+          :max="cfg.max" :min="cfg.min"
+          style="margin-right: 10px;"></input>
+        <input type="number" :name="i+'-text'" v-model="od[i]"
+          :max="cfg.max" :min="cfg.min"
+          :style="{width:cfg.max.toString().length+1.5+'em'}"></input>
+      </div>
+      <select v-else-if="cfg.type=='select'" :name="i" v-model="od[i]">
+        <option v-for="option,k in cfg.options" :value="k">{{ option }}</option>
+      </select>
+      <input v-else :name="i" :type="cfg.type" :size="cfg.size" v-model="od[i]"></input>
     </grid-row>
   </vueTemplate>
 </group>

@@ -107,14 +107,12 @@ vueTemplate {
   border-radius: 8px;
   background-color: #ffffff;
   box-shadow: 0 0 20px black; /* (h-offset, v-offset, blur-size, size-adjust) */
-  width: 400px;
-  p {
-    flex: 10 1 100%;
-  }
+  min-width: 300px;
 }
 .modal-action {
   display: flex;
   flex-direction: row;
+  justify-content: flex-end;
   width: 100%;
   padding: 5px;
   user-select: none;
@@ -126,11 +124,19 @@ vueTemplate {
 }
 .modal-body {
   width: 100%;
-  display: flex;
-  flex-flow: row wrap;
   padding: 5px 10px;
   min-height: 80px;
-  align-items: start;
+  > .modal-message {
+    margin-bottom: 10px;
+  }
+  > grid-layout {
+    align-items: baseline;
+    grid-template-columns: minmax(auto,max-content) max-content;
+    grid-column-gap: 5px;
+  }
+  input[type=range] {
+    vertical-align: text-bottom;
+  }
 }
 .modal-caption {
   background: hsl(var(--theme-face-hue, 240), 80%, 80%);
