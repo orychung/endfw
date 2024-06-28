@@ -43,6 +43,7 @@ class ModalScreen {
     return submit;
   }
   actions = []
+  od = Object()
   constructor(data) {
     Object.assign(this, data);
     // od for underlying data

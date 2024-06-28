@@ -95,7 +95,8 @@ Vue.endAddOn.createApp = function(options) {
         el.focus()
       }
     });
-    globalThis.all = app.mount(selector).all;
+    app.vm = app.mount(selector);
+    globalThis.all = app.vm.all;
     return app;
   });
 };
