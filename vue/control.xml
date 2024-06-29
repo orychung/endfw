@@ -69,8 +69,9 @@
     </screen-layer>
   </vueTemplate>
   <vueTemplate id="t-modal-field">
-    <grid-row>
-      <label :for="i">{{ cfg.name }}&nbsp;</label>
+    <grid-row class="modal-field">
+    <label>
+      <span v-if="cfg.name">{{ cfg.name }}&nbsp;</span>
       <div v-if="cfg.type=='range'">
         <input type="range" :name="i" v-model="od[i]"
           :max="cfg.max" :min="cfg.min"
@@ -82,7 +83,8 @@
       <select v-else-if="cfg.type=='select'" :name="i" v-model="od[i]">
         <option v-for="option,k in cfg.options" :value="k">{{ option }}</option>
       </select>
-      <input v-else :name="i" :type="cfg.type" :size="cfg.size" v-model="od[i]"></input>
+      <input v-else :name="i" :type="cfg.type" :autocomplete="cfg.autocomplete" :size="cfg.size" v-model="od[i]"></input>
+    </label>
     </grid-row>
   </vueTemplate>
 </group>
