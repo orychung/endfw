@@ -43,7 +43,6 @@ class ModalScreen {
     return submit;
   }
   actions = []
-  od = Object()
   constructor(data) {
     Object.assign(this, data);
     // od for underlying data
@@ -55,10 +54,12 @@ class ModalScreen {
     this.ondismiss?.();
     delete this.index;
   }
+  getOd() {return Object();}
   onkeydown(e) {
     this.actions.filter(a=>a.key==e.key)[0]?.call.bind(this)(this.od);
   }
   show() {
+    if (this.od==undefined) this.od = this.getOd();
     this.index = all.ui.modals.push(this);
   }
 }
