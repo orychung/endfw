@@ -23,31 +23,45 @@ th,td {
 }
 td.green {color: green;}
 td.red {color: red;}
+ul {margin-block: 0px;}
 </style>
 <script type="text/javascript" id="test">
+const tests = {
+  'common/builtin': {
+    'Object.exists': ()=>{
+      return ([3,,].exists(x=>x==3)
+           && [].exists(x=>true)===false);
+    },
+    'Promise.wrap': async ()=>{
+      let status = '';
+      let p111 = Promise.wrap();
+      let p11 = Promise.wrap(p111);
+      let p1 = Promise.wrap(p11);
+      p1.then(r=>status+=`p1r=${r}.`, e=>status+=`p1e=${e}.`);
+      p11.then(r=>status+=`p11r=${r}.`, e=>status+=`p11e=${e}.`);
+      p111.then(r=>status+=`p111r=${r}.`, e=>status+=`p111e=${e}.`);
+      p1.resolve('r1');
+      p111.reject('e1');
+      await Promise.allSettled([p1,p11,p111]);
+      return (status=='p1r=r1.p111e=e1.p11e=e1.');
+    },
+  },
+};
 async function runTests() {
-  let outcomeFile, outcomeFeature, status;
-  
-  outcomeFile = 'common/builtin';
-  all.ui.outcome.touch(outcomeFile, {green: 0, red: 0, failures: []});
-  
-  outcomeFeature = 'Promise.wrap';
-  status = '';
-  let p111 = Promise.wrap();
-  let p11 = Promise.wrap(p111);
-  let p1 = Promise.wrap(p11);
-  p1.then(r=>status+=`p1r=${r}.`, e=>status+=`p1e=${e}.`);
-  p11.then(r=>status+=`p11r=${r}.`, e=>status+=`p11e=${e}.`);
-  p111.then(r=>status+=`p111r=${r}.`, e=>status+=`p111e=${e}.`);
-  p1.resolve('r1');
-  p111.reject('e1');
-  await Promise.allSettled([p1,p11,p111]);
-  if (status=='p1r=r1.p111e=e1.p11e=e1.') {
-    all.ui.outcome[outcomeFile].green++;
-  } else {
-    all.ui.outcome[outcomeFile].red++;
-    all.ui.outcome[outcomeFile].failures.push(outcomeFeature);
-  };
+  tests.mapArray((fileTests,outcomeFile)=>{
+    fileTests.mapArray(async (test,outcomeFeature)=>{
+      all.ui.outcome.touch(outcomeFile, {green: 0, red: 0, failures: []});
+      try {
+        if (!(await test())) throw 'bad outcome';
+        all.ui.outcome[outcomeFile].green++;
+      }
+      catch (e) {
+        console.warn([outcomeFeature,e]);
+        all.ui.outcome[outcomeFile].red++;
+        all.ui.outcome[outcomeFile].failures.push(outcomeFeature);
+      }
+    });
+  });
 }
 </script>
 <script type="text/javascript" id="main">
@@ -59,8 +73,8 @@ async function initPage() {
   };
   globalThis.all = g;
   
-  await Vue.endAddOn.ready;
   Vue.endAddOn.useBasicMethods();
+  await Vue.endAddOn.load();
   window.apps = Vue.endAddOn.createApp({
     mountSelectors: ['#screen'],
   });

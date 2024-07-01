@@ -89,6 +89,11 @@ grid-row, grid-heading {
     grid-column-start: 1;
   }
 }
+grid-row.modal-field {
+  label {
+    display: contents;
+  }
+}
 
 vueTemplate {
   display: none;
@@ -143,7 +148,7 @@ vueTemplate {
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
   width: 100%;
-  padding: 10px;
+  padding: 0px 10px;
   font-weight: bold;
   font-size: 14px;
   user-select: none;

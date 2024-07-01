@@ -54,10 +54,12 @@ class ModalScreen {
     this.ondismiss?.();
     delete this.index;
   }
+  getOd() {return Object();}
   onkeydown(e) {
     this.actions.filter(a=>a.key==e.key)[0]?.call.bind(this)(this.od);
   }
   show() {
+    if (this.od==undefined) this.od = this.getOd();
     this.index = all.ui.modals.push(this);
   }
 }
