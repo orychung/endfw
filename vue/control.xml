@@ -38,7 +38,7 @@
       v-for="modal,i in w" v-focus
       @keydown="modal.onkeydown($event)">
       <div class="modal" :class="modal.cssClass">
-        <div class="modal-caption"><p>{{ modal.caption }}</p></div>
+        <div class="modal-caption"><h2>{{ modal.caption }}</h2></div>
         <div class="modal-body" v-focus>
           <component v-if="modal.vueTemplate" :is="modal.vueTemplate" :od="modal.od"></component>
           <template v-else>
@@ -56,7 +56,6 @@
           </template>
         </div>
         <div class="modal-action">
-          <p>&nbsp;</p>
           <button
             v-for="action in modal.actions"
             @click.stop="action.call.bind(modal)(modal.od)">
