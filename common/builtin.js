@@ -67,8 +67,8 @@ Object.defineMethod('touch', function touch(key, defaultValue={}) {
   if (!(key in this)) this[key] = defaultValue;
   return this[key];
 });
-Object.defineMethod('undergo', function undergo(method, output=(t,r)=>r) {
-  if (output == 'i') output = x=>x;
+Object.defineMethod('undergo', function undergo(method, output=(before,after)=>after) {
+  if (output == 'i') output = before=>before;
   if (method instanceof Array) {
     return method.map(x=>output(this,x(this)));
   } else {
@@ -107,11 +107,12 @@ Object.defineMethod('reduce', function reduce(f, p) {
 
 // SQL aggregation functions
 Object.defineMethod('exists', function exists(f) {
-  return Object.keys(this).reduce((p, x) => p || f(this[x], x, this), false);
+  for (var x in Object.keys(this)) if (f(this[x], x, this)) return true;
+  return false;
 });
 Object.defineMethod('first', function first(f=(x=>x), c=(x=>true)) {
   for (var x in Object.keys(this)) if (c(this[x], x, this)) return f(this[x], x, this);
-  return null;
+  return undefined;
 });
 Object.defineMethod('max', function max(f=(x=>x)) {
   return Object.keys(this).reduce((p, x) => ((p == null) || f(this[x], x, this) > p)?f(this[x], x, this):p, null);
@@ -138,9 +139,6 @@ Object.defineMethod('loopJoin', function loopJoin(
 Object.defineMethod('convert', function convert(f) {
   Object.keys(this).map((x) => this[x] = f(this[x], x, this));
   return this;
-});
-Object.defineMethod('asPMF', function asPMF() {
-  return new pmf(this);
 });
 Object.defineMethod('logDebug', function log(f) {
 	console.log(f(this));
@@ -199,6 +197,7 @@ var builtin_doc = {
   },
   Array: {
     at: "early availability for ES 2022",
+    done: "form single prompise",
     fromAsync: "Array.from for async generator",
     lookupOf: "form a key > value map",
     sortBy: "sort by value of single-param function",
@@ -213,12 +212,12 @@ var builtin_doc = {
     mapObject: "quasi-analog of Array.map, return an Object",
     mapKeyValue: "quasi-analog of Array.map, return an Object fKey, fVal",
     reduce: "analog of Array.reduce",
+    exists: "analog of SQL exists to make f(x,i,w) true",
     first: "analog of SQL first f(x,i,w) to make c(x,i,w) true",
     max: "analog of SQL max f(x,i,w)",
     min: "analog of SQL min f(x,i,w)",
     sum: "analog of SQL sum f(x,i,w)",
     loopJoin: "analog of SQL nested loop join o2, fKey(k1, k2), fVal(x1, x2, k1, k2), fFil(x1, x2, k1, k2)",
-    asPMF: "bridge to apply stat.js", // require stat.js
     convert: "similar to Array.map, but store the outcome in place",
     logDebug: "[debug use] log function of this (useful for method chain)",
     logThis: "[debug use] log this (useful for method chain)",
