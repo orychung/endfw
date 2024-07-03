@@ -107,12 +107,18 @@ Object.defineMethod('reduce', function reduce(f, p) {
 
 // SQL aggregation functions
 Object.defineMethod('exists', function exists(f) {
-  for (var x in Object.keys(this)) if (f(this[x], x, this)) return true;
+  for (const k in this) if (f(this[k], k, this)) return true;
   return false;
 });
 Object.defineMethod('first', function first(f=(x=>x), c=(x=>true)) {
-  for (var x in Object.keys(this)) if (c(this[x], x, this)) return f(this[x], x, this);
+  for (const k in this) if (c(this[k], k, this)) return f(this[k], k, this);
   return undefined;
+});
+Object.defineMethod('groupBy', function groupBy(fOrKey, select=(x=>x)) {
+  let output = {};
+  let f = fOrKey.call?fOrKey:(x=>x[fOrKey]);
+  for (const k in this) output.touch(f(this[k], k, this),[]).push(select(this[k], k, this));
+  return output;
 });
 Object.defineMethod('max', function max(f=(x=>x)) {
   return Object.keys(this).reduce((p, x) => ((p == null) || f(this[x], x, this) > p)?f(this[x], x, this):p, null);
@@ -130,7 +136,7 @@ Object.defineMethod('loopJoin', function loopJoin(
   fF = ()=>true
 ) {
   var k = Object.keys(t);
-  return Object.keys(this).reduce((p, k1) => k.reduce((p, k2) => 
+  return Object.keys(this).reduce((p, k1) => k.reduce((p, k2) =>
     fF(this[k1], t[k2], k1, k2)?p.attr(fK(k1, k2, this[k1], t[k2]), fV(this[k1], t[k2], k1, k2)):p
   , p), Object());
 });
@@ -214,6 +220,7 @@ var builtin_doc = {
     reduce: "analog of Array.reduce",
     exists: "analog of SQL exists to make f(x,i,w) true",
     first: "analog of SQL first f(x,i,w) to make c(x,i,w) true",
+    groupBy: "analog of SQL group by f(x,i,w) to output select(x,i,w)",
     max: "analog of SQL max f(x,i,w)",
     min: "analog of SQL min f(x,i,w)",
     sum: "analog of SQL sum f(x,i,w)",

@@ -30,7 +30,12 @@ const tests = {
   'common/builtin': {
     'Object.exists': ()=>{
       return ([3,,].exists(x=>x==3)
-           && [].exists(x=>true)===false);
+           && [].exists(x=>true)===false
+           && ({a:1}).exists(x=>x==1)===true);
+    },
+    'Object.groupBy': ()=>{
+      return (['12','23','33'].groupBy(1).mapArray().join('|')=='12|23,33'
+           && ({a:'1',b:'222',c:'4'}).groupBy(x=>x.length, (x,i)=>i).mapArray().join('|')=='a,c|b');
     },
     'Promise.wrap': async ()=>{
       let status = '';
