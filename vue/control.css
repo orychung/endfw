@@ -95,6 +95,16 @@ grid-row.modal-field {
   }
 }
 
+screen-layer {
+  pointer-events: none;
+  & > * {
+    pointer-events: initial;
+  }
+  position: absolute;
+  height: 100vh;
+  width: 100vw;
+}
+
 vueTemplate {
   display: none;
 }
@@ -135,9 +145,11 @@ vueTemplate {
     margin-bottom: 10px;
   }
   > grid-layout {
-    align-items: baseline;
     grid-template-columns: minmax(auto,max-content) max-content;
     grid-column-gap: 5px;
+  }
+  input {
+    flex-grow: 1;
   }
   input[type=range] {
     vertical-align: text-bottom;
