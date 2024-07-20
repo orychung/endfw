@@ -1,4 +1,4 @@
-class ModalScreen {
+var ModalScreen = class ModalScreen {
   static ACTION = {
     CANCEL: {name: 'Cancel', key: 'Escape',
              call: function(od){ this.dismiss(); }},

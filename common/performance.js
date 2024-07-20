@@ -15,6 +15,7 @@ Object.defineProperty(performance.__proto__, 'enumerateFunction', addMethod(asyn
   let execCount = 0;
   let lastEndTime = testStartTime;
   let lastStartTime;
+  // TODO: eliminate the cost used to do an empty loop;
   while (lastEndTime <= testStartTime+minTestTime) {
     lastStartTime = this.now();
     await f();
@@ -29,12 +30,12 @@ Object.defineProperty(performance.__proto__, 'enumerateFunction', addMethod(asyn
 }));
 
 // must include stat.js
-class perfCounter {
-  // TODO: use performance.now() to replace new Date().getTime()
+// TODO: use a better name
+// TODO: avoid touching the localThis
+var perfCounter = class perfCounter {
   constructor(enabled) {
     this.reset();
     this.enabled = enabled;
-    this.timeOffset = new Date().getTime() - performance.now();
   }
   reset() {
     this.callList = []; // each item is [0=processName, 1=refKey, 2=child, 3=startTime, 4=endTime, 5=refValue]
@@ -95,7 +96,7 @@ class perfCounter {
   }
 }
 
-class ThroughputMeter {
+var ThroughputMeter = class ThroughputMeter {
   tpm = 0
   status = 'stopped'
   constructor(data={}) {

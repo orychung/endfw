@@ -31,7 +31,7 @@ async function doAsync(syncMethod, timeout) {
   } catch (e) {console.error(e);}
 }
 
-class comPromise extends Promise {
+var comPromise = class comPromise extends Promise {
   constructor(resolver) {
     var outBox = undefined;
     super((resolve, reject)=>outBox={resolve:resolve, reject:reject});

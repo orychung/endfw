@@ -1,4 +1,4 @@
-class escapeState {
+var escapeState = class escapeState {
 	constructor(lookup, stateList) {
 		this.lookup = lookup;
 		this.stateList = stateList;
@@ -16,7 +16,7 @@ class escapeState {
 	}
 }
 
-class escapeList {
+var escapeList = class escapeList {
 	constructor(patterns, isQuote=()=>false) {
 		this.patterns = patterns;
 		this.isQuote = isQuote;
@@ -77,7 +77,7 @@ class escapeList {
 	}
 }
 
-class tokenTree {
+var tokenTree = class tokenTree {
 	constructor() {
 		this.state = 'root';
 		this.starting = '';
@@ -109,10 +109,10 @@ class tokenTree {
 
 // for being imported as node module
 if (typeof module === 'undefined') {
-    // skip if not running node
+  // skip if not running node
 } else {
-    module.exports = {
-		escapeList: escapeList,
-        tokenTree: tokenTree
-    }
+  module.exports = {
+    escapeList: escapeList,
+    tokenTree: tokenTree
+  }
 }

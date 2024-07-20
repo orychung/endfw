@@ -1,7 +1,10 @@
 "use strict";
 // library to add feature to built-in types
 Function.prototype.defineMethod = function defineMethod(prop, details) {
-  let finalDetails = Object();
+  const finalDetails = {
+    configurable: true,
+    enumerable: false,
+  };
   if (details instanceof Function) {
     Object.assign(finalDetails, {
       writable: true,
@@ -10,7 +13,6 @@ Function.prototype.defineMethod = function defineMethod(prop, details) {
   } else {
     Object.assign(finalDetails, details);
   }
-  finalDetails.enumerable = false;
   Object.defineProperty(this.prototype, prop, finalDetails);
 }
 

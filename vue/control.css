@@ -101,8 +101,15 @@ screen-layer {
     pointer-events: initial;
   }
   position: absolute;
+  display: block;
+  top: 0px;
+  left: 0px;
   height: 100vh;
   width: 100vw;
+  contain: strict;
+  * {
+    box-sizing: border-box;
+  }
 }
 
 vueTemplate {

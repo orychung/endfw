@@ -9,62 +9,6 @@ function amp_encode(text, replaceBreaks=false) {
     return newText;
 }
 
-function html_tag(name, content='', attrs=[], opt={}) {
-    var useLineBreak = (opt.baseIndent!=null) || (opt.contentIndent!=null);
-    var baseIndentStr = ''.padStart(opt.baseIndent || 0,' ');
-    var contentIndentStr = ''.padStart(opt.contentIndent || 0,' ');
-    return [
-        `<${name}${
-        attrs.map(x=>' '+x.name+'="'+(''+x.value).replace(/"/g,'&quot;')+'"').join('')
-        }>`,
-        useLineBreak?(contentIndentStr+content.replace(/\n/g,'\n'+contentIndentStr)):content,
-        `</${name}>`
-    ].map(x=>useLineBreak?(baseIndentStr+x.replace(/\n/g,'\n'+baseIndentStr)):x).join(useLineBreak?'\n':'');
-}
-
-function html_table(data, opt={}) {
-    if (!(data instanceof Array) || data.length==0) return opt.emptyReturn || '';
-    var useLineBreak = (opt.baseIndent!=null) || (opt.levelIndent!=null);
-    var lineJoint = useLineBreak?'\n':''
-    var tableAttrs = opt.tableAttrs || [];
-    var tdMapper = opt.tdMapper || (x=>x);
-    var tdAttrsMapper = opt.tdAttrsMapper || (x=>[]);
-    var tdEscaper = opt.tdEscaper || (x=>x && amp_encode(''+x).replace(new RegExp('\n','g'),'<br/>'));
-    var thMapper = opt.thMapper || (x=>x);
-    var thEscaper = opt.thEscaper || (x=>x && amp_encode(''+x).replace(new RegExp('\n','g'),'<br/>'));
-    var trSuffix = opt.trSuffix || (x=>'');
-    var cols = [];
-    var attrs = [];
-    Object.keys(data[0]).forEach(x=>(x.startsWith('@')?attrs:cols).push(x));
-    return html_tag(
-        'table',
-        html_tag(
-            'tbody',
-            [
-                html_tag(
-                    'tr',
-                    cols.map(c=>c.split('|')).map(c=>html_tag(
-                        'th',
-                        thEscaper(thMapper((1 in c)?c[1]:c[0]))
-                    )).join(lineJoint),
-                    [], {contentIndent:opt.levelIndent}
-                ),
-                ...data.map(r=>html_tag(
-                    'tr',
-                    cols.map(c=>html_tag(
-                        'td',
-                        tdEscaper(tdMapper(r[c],c)),
-                        tdAttrsMapper(r[c],c)
-                    )).join(lineJoint),
-                    attrs.map(a=>Object({name:a.slice(1),value:r[a]})), {contentIndent:opt.levelIndent}
-                )+trSuffix(r)),
-            ].join(lineJoint),
-            [], {contentIndent:opt.levelIndent}
-        ),
-        tableAttrs, {baseIndent:opt.baseIndent}
-    );
-}
-
 var now = Object();
 now.format = function (str){
     var true_now = new Date();
@@ -82,7 +26,7 @@ now.format = function (str){
 now.t01 = function (){return now.format('[:h:m:s] ')};
 now.t02 = function (){return now.format('[:Y4:M:DT:h:m:s] ')};
 
-class ParamText {
+var ParamText = class ParamText {
     constructor(template, defaults = {}) {
         this.template = template;
         this.defaults = defaults;
@@ -164,17 +108,15 @@ class ParamText {
         }
     };
 }
-const param_text = ParamText;
+var param_text = ParamText;
 
 // for being imported as node module
 if (typeof module === 'undefined') {
-    // skip if not running node
+  // skip if not running node
 } else {
-    module.exports = {
-        amp_encode: amp_encode,
-        html_tag: html_tag,
-        html_table: html_table,
-        now: now,
-        ParamText: ParamText,
-    };
+  module.exports = {
+    amp_encode: amp_encode,
+    now: now,
+    ParamText: ParamText,
+  };
 }

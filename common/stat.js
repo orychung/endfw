@@ -32,7 +32,7 @@ function bulkCalculate(f, outArray, ...inArrays) {
     // });
 // }
 
-class Accumulator {
+var Accumulator = class Accumulator {
     constructor(base={}) {
         this.base = base;
     }
@@ -47,7 +47,7 @@ class Accumulator {
     }
 }
 
-class pmf {
+var pmf = class pmf {
     // Probability Mass Function
     /* As a parent distribution, the flow of use:
         1. compute parent-prior
