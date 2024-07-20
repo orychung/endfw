@@ -22,6 +22,7 @@
     yield* getFilesRecursively(await this.getAsFileSystemHandle());
   });
   Object.defineProperty(DataTransferItem.prototype, "files", {
+    configurable: true,
     get() { return Array.fromAsync(this.getAsFiles()); }
   });
 };

@@ -15,7 +15,7 @@ Vue.endAddOn = {
       w:   container
       map: local map/dictionary
   */
-  rootPath: document.currentScript.src.replace(/\/client\/quick_vue.js.+/,'/vue/'),
+  rootPath: document.currentScript.src.replace(/\/client\/quick_vue\.js.*/,'/vue/'),
   templates: [],
   templateTypes: {},
 };
