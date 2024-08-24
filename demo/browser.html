@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html class="full-size">
 <head>
 <title>Unit Test Browser Page</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'><circle r='1' fill='%23AAA'/></svg>" />
@@ -37,6 +37,15 @@
 <script type="text/javascript" src="../client/shortcuts.js"></script>
 <script type="text/javascript" src="../client/shortcuts.js"></script>
 <style>
+* {
+  box-sizing: border-box;
+  outline: none;
+}
+body {
+  margin: 0px;
+  padding: 20px;
+  display: flex;
+}
 table {
   border: 0.1px solid #444;
   border-spacing: 0px;
@@ -93,6 +102,30 @@ async function runTests() {
   });
 }
 </script>
+<script id="util">
+Object.assign(Vue.endAddOn.commonMethods, {
+  async keydown(e) {
+    if (e.ctrlKey) {
+      if (e.key=='b') {
+        let items = await navigator.clipboard.read();
+        types = items[0].types;
+        console.log(types);
+        console.log(await types.map(type=>items[0].getType(type)).done());
+      }
+    }
+  },
+  async paste(e) {
+    Array.from(e.clipboardData.items).forEach(item=>{
+      if (item.kind=='file') {
+        // testing client/builtin.js DataTransferItem.getAsFiles
+        item.files.then(files=>console.table(files));
+      } else {
+        console.log(item);
+      }
+    });
+  }
+});
+</script>
 <script type="text/javascript" id="main">
 async function initPage() {
   g.ui = {
@@ -113,10 +146,16 @@ async function initPage() {
 }
 </script>
 </head>
-<body onload="initPage();">
+<body class="full-size" onload="initPage();">
 <vueTemplates>
 <vueTemplate id="v-screen">
-  <div style="padding: 5px;">
+  <div class="full-size" v-focus tabindex="-1"
+    @contextmenu="showContextmenu({},$event,{menuButtons:[
+      {text:'Testing',click:()=>{console.log('test!')}},
+    ]});"
+    @keydown="keydown"
+    @paste="paste"
+    >
     <table>
     <thead>
       <th>File</th>

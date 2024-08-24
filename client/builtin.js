@@ -18,6 +18,8 @@
       }
     }
   }
+  
+  // expose via DataTransferItem class
   DataTransferItem.defineMethod("getAsFiles", async function* getAsFiles() {
     yield* getFilesRecursively(await this.getAsFileSystemHandle());
   });

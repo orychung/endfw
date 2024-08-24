@@ -30,7 +30,12 @@ Vue.endAddOn.basicMethods = {
     if (menuButtons===undefined) return false;
     all.ui.activeElementBeforeContextmenu = document.activeElement;
     let css = {};
-    let [x,y,w,h] = [e.pageX,e.pageY,document.body.scrollWidth,document.body.scrollHeight];
+    let [x,y,w,h] = [
+      e.pageX,
+      e.pageY,
+      window.visualViewport.width,
+      window.visualViewport.height
+    ];
     if (x < .6*w) css.left = x+'px'; else css.right  = (w-x)+'px';
     if (y < .6*h) css.top  = y+'px'; else css.bottom = (h-y)+'px';
     all.ui.contextmenus.push({

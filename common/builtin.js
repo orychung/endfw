@@ -158,9 +158,6 @@ Object.defineMethod('logThis', {
 		return this;
 	}
 });
-if ('jQuery' in globalThis) Object.defineMethod('$', {
-  get() {return $(this);}
-});
 
 // custom
 String.defineMethod('likeRE', function likeRE(re) {
@@ -212,7 +209,6 @@ var builtin_doc = {
     shuffle: "reorder items randomly",
   },
   Object: {
-    $: "init object with jQuery $",
     attr: "quasi-analog of jQuery attr, do not support single param use",
     filterArray: "quasi-analog of Array.filter, return an Array of Object.keys order",
     filterObject: "quasi-analog of Array.filter, return an Object",
