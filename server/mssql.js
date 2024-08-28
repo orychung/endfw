@@ -13,6 +13,8 @@ var defaultConfig = {
     },
     options: {
         enableArithAbort: true,
+        trustedConnection: true, // Set to true if using Windows Authentication
+        trustServerCertificate: true, // Set to true if using self-signed certificates
     }
 }
 
