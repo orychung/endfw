@@ -107,42 +107,6 @@ Object.defineMethod('reduce', function reduce(f, p) {
   return Object.keys(this).reduce((p, x) => f(p, this[x], x, this), p);
 });
 
-// SQL aggregation functions
-Object.defineMethod('exists', function exists(f) {
-  for (const k in this) if (f(this[k], k, this)) return true;
-  return false;
-});
-Object.defineMethod('first', function first(f=(x=>x), c=(x=>true)) {
-  for (const k in this) if (c(this[k], k, this)) return f(this[k], k, this);
-  return undefined;
-});
-Object.defineMethod('groupBy', function groupBy(fOrKey, select=(x=>x)) {
-  let output = {};
-  let f = fOrKey.call?fOrKey:(x=>x[fOrKey]);
-  for (const k in this) output.touch(f(this[k], k, this),[]).push(select(this[k], k, this));
-  return output;
-});
-Object.defineMethod('max', function max(f=(x=>x)) {
-  return Object.keys(this).reduce((p, x) => ((p == null) || f(this[x], x, this) > p)?f(this[x], x, this):p, null);
-});
-Object.defineMethod('min', function min(f=(x=>x)) {
-  return Object.keys(this).reduce((p, x) => ((p == null) || f(this[x], x, this) < p)?f(this[x], x, this):p, null);
-});
-Object.defineMethod('sum', function sum(f=(x=>x)) {
-  return Object.keys(this).reduce((p, x) => p + parseFloat(f(this[x], x, this)), 0);
-});
-Object.defineMethod('loopJoin', function loopJoin(
-  t,
-  fK = (k1,k2)=>[k1,k2],
-  fV = (x1,x2)=>x2.reduce((p,v2,k2)=>p.attr(k2,v2),x1.mapObject()),
-  fF = ()=>true
-) {
-  var k = Object.keys(t);
-  return Object.keys(this).reduce((p, k1) => k.reduce((p, k2) =>
-    fF(this[k1], t[k2], k1, k2)?p.attr(fK(k1, k2, this[k1], t[k2]), fV(this[k1], t[k2], k1, k2)):p
-  , p), Object());
-});
-
 // custom
 Object.defineMethod('convert', function convert(f) {
   Object.keys(this).map((x) => this[x] = f(this[x], x, this));
@@ -215,14 +179,6 @@ var builtin_doc = {
     mapArray: "quasi-analog of Array.map, return an Array of Object.keys order",
     mapObject: "quasi-analog of Array.map, return an Object",
     mapKeyValue: "quasi-analog of Array.map, return an Object fKey, fVal",
-    reduce: "analog of Array.reduce",
-    exists: "analog of SQL exists to make f(x,i,w) true",
-    first: "analog of SQL first f(x,i,w) to make c(x,i,w) true",
-    groupBy: "analog of SQL group by f(x,i,w) to output select(x,i,w)",
-    max: "analog of SQL max f(x,i,w)",
-    min: "analog of SQL min f(x,i,w)",
-    sum: "analog of SQL sum f(x,i,w)",
-    loopJoin: "analog of SQL nested loop join o2, fKey(k1, k2), fVal(x1, x2, k1, k2), fFil(x1, x2, k1, k2)",
     convert: "similar to Array.map, but store the outcome in place",
     logDebug: "[debug use] log function of this (useful for method chain)",
     logThis: "[debug use] log this (useful for method chain)",
@@ -239,13 +195,65 @@ var builtin_doc = {
   Promise: {
     wrap: "Promise constructor with resolve / reject / status / result exposed",
   },
-}
+  initMore: {
+    sql: {
+      reduce: "analog of Array.reduce",
+      exists: "analog of SQL exists to make f(x,i,w) true",
+      first: "analog of SQL first f(x,i,w) to make c(x,i,w) true",
+      groupBy: "analog of SQL group by f(x,i,w) to output select(x,i,w)",
+      max: "analog of SQL max f(x,i,w)",
+      min: "analog of SQL min f(x,i,w)",
+      sum: "analog of SQL sum f(x,i,w)",
+      loopJoin: "analog of SQL nested loop join o2, fKey(k1, k2), fVal(x1, x2, k1, k2), fFil(x1, x2, k1, k2)",
+    }
+  },
+};
+
+var builtin_initMore = {
+  sql() {
+    Object.defineMethod('exists', function exists(f) {
+      for (const k in this) if (f(this[k], k, this)) return true;
+      return false;
+    });
+    Object.defineMethod('first', function first(f=(x=>x), c=(x=>true)) {
+      for (const k in this) if (c(this[k], k, this)) return f(this[k], k, this);
+      return undefined;
+    });
+    Object.defineMethod('groupBy', function groupBy(forKey, select=(x=>x)) {
+      let output = {};
+      let f = forKey.call?forKey:(x=>x[forKey]);
+      for (const k in this) output.touch(f(this[k], k, this),[]).push(select(this[k], k, this));
+      return output;
+    });
+    Object.defineMethod('max', function max(f=(x=>x)) {
+      return Object.keys(this).reduce((p, x) => ((p == null) || f(this[x], x, this) > p)?f(this[x], x, this):p, null);
+    });
+    Object.defineMethod('min', function min(f=(x=>x)) {
+      return Object.keys(this).reduce((p, x) => ((p == null) || f(this[x], x, this) < p)?f(this[x], x, this):p, null);
+    });
+    Object.defineMethod('sum', function sum(f=(x=>x)) {
+      return Object.keys(this).reduce((p, x) => p + parseFloat(f(this[x], x, this)), 0);
+    });
+    Object.defineMethod('loopJoin', function loopJoin(
+      t,
+      fK = (k1,k2)=>[k1,k2],
+      fV = (x1,x2)=>x2.reduce((p,v2,k2)=>p.attr(k2,v2),x1.mapObject()),
+      fF = ()=>true
+    ) {
+      var k = Object.keys(t);
+      return Object.keys(this).reduce((p, k1) => k.reduce((p, k2) =>
+        fF(this[k1], t[k2], k1, k2)?p.attr(fK(k1, k2, this[k1], t[k2]), fV(this[k1], t[k2], k1, k2)):p
+      , p), Object());
+    });
+  },
+};
 
 // for being imported as node module
 if (typeof module === 'undefined') {
   // skip if not running node
 } else {
   module.exports = {
-    builtin_doc: builtin_doc
+    doc: builtin_doc,
+    initMore: builtin_initMore,
   };
 }

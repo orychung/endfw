@@ -73,9 +73,6 @@ contextmenu-button:hover {
 
 grid-layout {
   display: grid;
-  /* grid-auto-columns: auto; */
-  /* grid-auto-rows: auto; */
-  /* auto fails since it allows auto-wrap */
   grid-template-columns: repeat(50, auto);
   grid-template-rows: repeat(50, auto);
 }
