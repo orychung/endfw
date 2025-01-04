@@ -116,9 +116,9 @@ Object.defineMethod('first', function first(f=(x=>x), c=(x=>true)) {
   for (const k in this) if (c(this[k], k, this)) return f(this[k], k, this);
   return undefined;
 });
-Object.defineMethod('groupBy', function groupBy(fOrKey, select=(x=>x)) {
+Object.defineMethod('groupBy', function groupBy(forKey, select=(x=>x)) {
   let output = {};
-  let f = fOrKey.call?fOrKey:(x=>x[fOrKey]);
+  let f = forKey.call?forKey:(x=>x[forKey]);
   for (const k in this) output.touch(f(this[k], k, this),[]).push(select(this[k], k, this));
   return output;
 });

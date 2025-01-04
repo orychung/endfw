@@ -14,7 +14,6 @@ if (typeof module === 'undefined') {
     ingest: require('./server/ingest'),
     
     builtin: require('./common/builtin'),
-    dbBuiltin: require('./common/dbBuiltin'),
     global: require('./common/global'),
     parse: require('./common/parse'),
     performance: require('./common/performance'),
