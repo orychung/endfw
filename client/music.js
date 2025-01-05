@@ -166,21 +166,11 @@
   }
 
   class MusicalBuffer extends MusicalItem {
-    bufferEventListeners = []
     constructor(ctx, options={}) {
       super(ctx, options);
     }
     get playbackTime() {
       return this.ctx.currentTime - this.ctxOffset;
-    }
-    addEventListener(type, listener, ...more) {
-      if (type == 'ended') {
-        // relay valid listeners to AudioBufferSourceNode
-        this.bufferEventListeners.push({type, listener});
-        if (this.buffer) this.buffer.addEventListener(type, listener);
-      } else {
-        MusicalItem.prototype.addEventListener.apply(this, [type, listener, ...more]);
-      }
     }
     async load(input) {
       if (input.arrayBuffer) {
@@ -204,7 +194,9 @@
         return;
       }
       this.buffer = new AudioBufferSourceNode(this.ctx, this.options);
-      this.bufferEventListeners.forEach(x=>this.buffer.addEventListener(x.type, x.listener));
+      this.buffer.addEventListener('ended', e=>{
+        if (e.target == this.buffer) this.dispatchEvent(new CustomEvent('ended'));
+      });
       this.buffer.buffer = this.audioData;
       this.buffer.connect(this.analyser);
       this.unmute();
