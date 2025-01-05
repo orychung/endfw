@@ -44,7 +44,7 @@
     }
   }
 
-  class MusicalItem {
+  class MusicalItem extends EventTarget {
     static defaults = {
       gain: 0.3,
       frequency: 440,
@@ -52,6 +52,7 @@
       notes: Music.notes,
     }
     constructor(ctx, options={}) {
+      super();
       this.ctx = ctx;
       this._options = options;
       this.options = new Proxy(this, {
@@ -172,9 +173,14 @@
     get playbackTime() {
       return this.ctx.currentTime - this.ctxOffset;
     }
-    addEventListener(type, listener) {
-      this.bufferEventListeners.push({type, listener});
-      if (this.buffer) this.buffer.addEventListener(type, listener);
+    addEventListener(type, listener, ...more) {
+      if (type == 'ended') {
+        // relay valid listeners to AudioBufferSourceNode
+        this.bufferEventListeners.push({type, listener});
+        if (this.buffer) this.buffer.addEventListener(type, listener);
+      } else {
+        MusicalItem.prototype.addEventListener.apply(this, [type, listener, ...more]);
+      }
     }
     async load(input) {
       if (input.arrayBuffer) {
@@ -204,12 +210,14 @@
       this.unmute();
       this.buffer.start(when, offset, duration);
       this.ctxOffset = Math.max(when || 0, this.ctx.currentTime) - (offset || 0);
+      this.dispatchEvent(new CustomEvent('started'));
     }
     stop() {
       if (!this.buffer) return;
       this.buffer.stop();
       this.buffer.disconnect();
       delete this.buffer;
+      this.dispatchEvent(new CustomEvent('stopped'));
     }
   }
   
