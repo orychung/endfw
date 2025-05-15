@@ -44,7 +44,7 @@
     }
   }
 
-  class MusicalItem {
+  class MusicalItem extends EventTarget {
     static defaults = {
       gain: 0.3,
       frequency: 440,
@@ -52,6 +52,7 @@
       notes: Music.notes,
     }
     constructor(ctx, options={}) {
+      super();
       this.ctx = ctx;
       this._options = options;
       this.options = new Proxy(this, {
@@ -165,16 +166,11 @@
   }
 
   class MusicalBuffer extends MusicalItem {
-    bufferEventListeners = []
     constructor(ctx, options={}) {
       super(ctx, options);
     }
     get playbackTime() {
       return this.ctx.currentTime - this.ctxOffset;
-    }
-    addEventListener(type, listener) {
-      this.bufferEventListeners.push({type, listener});
-      if (this.buffer) this.buffer.addEventListener(type, listener);
     }
     async load(input) {
       if (input.arrayBuffer) {
@@ -198,18 +194,22 @@
         return;
       }
       this.buffer = new AudioBufferSourceNode(this.ctx, this.options);
-      this.bufferEventListeners.forEach(x=>this.buffer.addEventListener(x.type, x.listener));
+      this.buffer.addEventListener('ended', e=>{
+        if (e.target == this.buffer) this.dispatchEvent(new CustomEvent('ended'));
+      });
       this.buffer.buffer = this.audioData;
       this.buffer.connect(this.analyser);
       this.unmute();
       this.buffer.start(when, offset, duration);
       this.ctxOffset = Math.max(when || 0, this.ctx.currentTime) - (offset || 0);
+      this.dispatchEvent(new CustomEvent('started'));
     }
     stop() {
       if (!this.buffer) return;
       this.buffer.stop();
       this.buffer.disconnect();
       delete this.buffer;
+      this.dispatchEvent(new CustomEvent('stopped'));
     }
   }
   

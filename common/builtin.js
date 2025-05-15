@@ -14,7 +14,7 @@ Function.prototype.defineMethod = function defineMethod(prop, details) {
     Object.assign(finalDetails, details);
   }
   Object.defineProperty(this.prototype, prop, finalDetails);
-}
+};
 
 // early availability
 if (!Array.prototype.at) Array.defineMethod('at', function at(index) {
@@ -129,7 +129,7 @@ String.defineMethod('likeRE', function likeRE(re) {
 });
 
 // custom
-JSON.serialCopy = function(obj) {return JSON.parse(JSON.stringify(obj));}
+JSON.serialCopy = function(obj) {return JSON.parse(JSON.stringify(obj));};
 
 // custom
 Promise.wrap = function wrap(promise) {
@@ -157,7 +157,7 @@ Promise.wrap = function wrap(promise) {
     get result() {return target.result},
   })
   return returnPromise;
-}
+};
 
 // documentation about what is done
 var builtin_doc = {

@@ -96,6 +96,18 @@ Vue.endAddOn.createApp = function(options) {
       },
     });
     allTemplates.forEach(x=>app.component(x.id, x.details));
+    app.directive('nodeRef', {
+      updated(el, binding, vnode) {
+        if (!binding.value) return;
+        // od = one of the props of the context
+          // LIMITATION: cannot assign vnode to this object since it seems like a clone
+        // k1 = key to reach the containing object
+          // TODO: explore way to avoid this restriction to have a child object
+        // k2 = key to store the instance (vnode with proxy)
+        const [od, k1, k2] = binding.value;
+        if (od) od[k1][k2??'vnode'] = binding.instance;
+      }
+    });
     app.directive('focus', {
       // When the bound element is mounted into the DOM...
       mounted(el) {
