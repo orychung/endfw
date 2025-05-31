@@ -44,17 +44,38 @@ Array.defineMethod('sortBy', function sortBy(f, desc=false) {
   this.sort((x1,x2) => ((x,y) => (y>x)?d[0]:(x>y)?d[1]:0)(f(x1), f(x2)));
   return this;
 });
-Array.defineMethod('shuffle', function shuffle() {
-  for (var i = this.length - 1; i > 0; i--) {
-    var cur = Math.floor(Math.random() * (i + 1));
-    if (cur != i) {
-      var ptr = this[cur];
-      this[cur] = this[i];
-      this[i] = ptr;
+// Array.defineMethod('shuffle', function shuffle() { --20% slower
+  // for (var i = this.length - 1; i > 0; i--) {
+    // const cur = Math.floor(Math.random() * (i + 1));
+    // if (cur != i) {
+      // const ptr = this[cur];
+      // this[cur] = this[i];
+      // this[i] = ptr;
+    // };
+  // };
+  // return this;
+// });
+(function () {
+  const randomU32_pool = new Uint32Array(8000);
+  let randomU32_remain = 0;
+  //shuffle 100k need 0.31ms
+  Array.defineMethod('shuffle', function shuffle() {
+    for (var i = this.length - 1; i > 0; i--) {
+      if (randomU32_remain === 0) {
+        crypto.getRandomValues(randomU32_pool);
+        randomU32_remain = 8000;
+      }
+      //const cur = randomU32_pool[--randomU32_remain] % (i + 1); --3 times slower
+      const cur = Math.floor(randomU32_pool[--randomU32_remain] * (i + 1) / 0x100000000);
+      if (cur != i) {
+        const ptr = this[cur];
+        this[cur] = this[i];
+        this[i] = ptr;
+      };
     };
-  };
-  return this;
-});
+    return this;
+  });
+})();
 Object.defineMethod('pushTo', function pushTo(target, key) {
   if (key) {
     target[key] = this;

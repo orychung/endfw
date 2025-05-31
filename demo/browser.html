@@ -61,6 +61,14 @@ ul {margin-block: 0px;}
 <script type="text/javascript" id="test">
 const tests = {
   'common/builtin': {
+    'Array.shuffle': ()=>{
+      let sums = [0,0,0,0,0];
+      const TEST_SIZE = 10000;
+      for (var i=0;i<TEST_SIZE;i++) {
+        [1,2,4,8,16,32,64,128,256,512].shuffle().forEach((x,i)=>sums[i]+=x);
+      }
+      return sums.map(x=>x/TEST_SIZE/102.4).filter(x=>(x<0.95) || (x>1.05)).length==0;
+    },
     'Object.exists': ()=>{
       return ([3,,].exists(x=>x==3)
            && [].exists(x=>true)===false
@@ -85,6 +93,12 @@ const tests = {
     },
   },
 };
+const timeTests = {
+  'Array.shuffle': async ()=>{
+    x = Array(100000).fill(0).map(x=>Math.random());
+    console.log(await performance.enumerateFunction(()=>x.shuffle(),{minTestTime: 1000}));
+  }
+}
 async function runTests() {
   tests.mapArray((fileTests,outcomeFile)=>{
     fileTests.mapArray(async (test,outcomeFeature)=>{
@@ -127,6 +141,7 @@ Object.assign(Vue.endAddOn.commonMethods, {
 });
 </script>
 <script type="text/javascript" id="main">
+builtin_initMore.sql();
 async function initPage() {
   g.ui = {
     themeFaceHue: 120,

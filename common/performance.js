@@ -12,20 +12,34 @@ Object.defineProperty(performance.__proto__, 'enumerateFunction', addMethod(asyn
   let minTestTime = options.minTestTime || 0;
   let testStartTime = this.now();
   let totalExecTime = 0;
+  let totalCompensatedTime = 0;
   let execCount = 0;
   let lastEndTime = testStartTime;
   let lastStartTime;
-  // TODO: eliminate the cost used to do an empty loop;
-  while (lastEndTime <= testStartTime+minTestTime) {
-    lastStartTime = this.now();
-    await f();
-    lastEndTime = this.now();
-    totalExecTime += lastEndTime - lastStartTime;
-    execCount += 1;
+  if (x.constructor.name === 'AsyncFunction') {
+    while (lastEndTime <= testStartTime+minTestTime) {
+      lastStartTime = this.now();
+      let x = f().then(x=>lastEndTime = this.now());
+      await x;
+      totalExecTime += lastEndTime - lastStartTime;
+      totalCompensatedTime += this.now() - lastEndTime;
+      execCount += 1;
+    }
+  } else {
+    while (lastEndTime <= testStartTime+minTestTime) {
+      lastStartTime = this.now();
+      f();
+      lastEndTime = this.now();
+      totalExecTime += lastEndTime - lastStartTime;
+      totalCompensatedTime += this.now() - lastEndTime;
+      execCount += 1;
+    }
   }
+  totalExecTime -= totalCompensatedTime;
   return ({
-    totalExecTime, execCount,
     averageTime: totalExecTime / execCount,
+    totalExecTime, execCount,
+    totalCompensatedTime,
   });
 }));
 
