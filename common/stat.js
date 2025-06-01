@@ -80,18 +80,51 @@ var PMF = class PMF {
     for (var i=0;i<size;i++) data[this.sample()] += 1;
     return new PMF(data);
   }
-  normalize() {
+  normalize(targetSum = 1) {
     delete this.unsortedCDF;
-    Object.keys(this.base).forEach(k=>this.base[k]/=this.priorSum);
-    this.priorSum = 1;
+    const scale = this.priorSum / targetSum;
+    Object.keys(this.base).forEach(k=>this.base[k]/=scale);
+    this.priorSum = targetSum;
     return this;
   }
   project(f) {
-    // project distribution of f(base)
+    // project distribution of f(base) or apply scalar operation on values
     return new PMF(Object.keys(this.base).reduce((p, x) => p.attr(f(x), (p[f(x)] || 0) + this.base[x]), Object()));
+  }
+  join(pmf, f=(v1,v2)=>`${v1},${v2}`) {
+    let accumulator = new Accumulator();
+    Object.entries(this.base).forEach(([v1, p1]) => {
+      Object.entries(pmf.base).forEach(([v2, p2]) => {
+        accumulator.add(f(v1, v2), p1 * p2);
+      });
+    });
+    return new PMF(accumulator.base);
+  }
+  concat(pmf) {
+    // form new pmf by concatenating 2 pmfs
+    let accumulator = new Accumulator();
+    Object.entries(this.base).forEach(([v, p]) => accumulator.add(v, p));
+    Object.entries(pmf).forEach(([v, p]) => accumulator.add(v, p));
+    return new PMF(accumulator.base);
+  }
+  filter(f) {
+    // form new pmf by entries where f(case, prob) is truthy
+    let accumulator = new Accumulator();
+    Object.entries(this.base).forEach(([v, p]) => {
+      if (f(v)) accumulator.add(v, p);
+    });
+    return new PMF(accumulator.base);
   }
   static fromSample(sample) {
     return new PMF(sample.reduce((p,x)=>p.attr(x, (p[x] || 0)+1), Object()));
+  }
+  static fromDice(number, face) {
+    let dice = PMF.fromSample(Combin.range(1, face + 1)).normalize();
+    let newPMF = dice;
+    for (var i=1; i<number; i++) {
+      newPMF = newPMF.join(dice, (v1,v2)=>parseInt(v1)+parseInt(v2));
+    }
+    return newPMF;
   }
 }
 
