@@ -113,7 +113,9 @@ var PMF = class PMF {
   }
   project(f) {
     // project distribution of f(base) or apply scalar operation on values
-    return new PMF(Object.keys(this.base).reduce((p, x) => p.attr(f(x), (p[f(x)] || 0) + this.base[x]), Object()));
+    let accumulator = new Accumulator();
+    Object.entries(this.base).forEach(([v, p])=>accumulator.add(f(v), p));
+    return new PMF(accumulator.base);
   }
   join(pmf, f=(v1,v2)=>`${v1},${v2}`) {
     let accumulator = new Accumulator();
@@ -143,7 +145,9 @@ var PMF = class PMF {
     return Object.entries(this.base).reduce((p,x)=>p+f(x[0])*x[1],0)/this.priorSum;
   }
   static fromSample(sample) {
-    return new PMF(sample.reduce((p,x)=>p.attr(x, (p[x] || 0)+1), Object()));
+    let accumulator = new Accumulator();
+    sample.forEach(x=>accumulator.add(x, 1));
+    return new PMF(accumulator.base);
   }
   static fromDice(number, face) {
     let dice = PMF.fromSample(Combin.range(1, face + 1)).normalize();
