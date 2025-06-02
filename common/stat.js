@@ -49,7 +49,7 @@ var PMF = class PMF {
   */
   constructor(base) {
     this.base = base; // expect key-value = caseName-probability
-    this.priorSum = this.base.reduce((p,x)=>p+x, 0);
+    this.priorSum = Object.entries(this.base).reduce((p,x)=>p+x[1], 0);
     // TODO: add measure to improve precision of minority
   }
   initPercentile() {
