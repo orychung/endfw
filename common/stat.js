@@ -52,6 +52,30 @@ var PMF = class PMF {
     this.priorSum = this.base.reduce((p,x)=>p+x, 0);
     // TODO: add measure to improve precision of minority
   }
+  initPercentile() {
+    if (!this.sortedCDF) {
+      this.sortedCDF = Object.keys(this.base).sort((a,b)=>Number(a)-Number(b)).map(x=>[Number(x), this.base[x]]);
+      for (var i=1;i<this.sortedCDF.length;i++) this.sortedCDF[i][1] += this.sortedCDF[i-1][1];
+      this.count = this.sortedCDF.length;
+    }
+  }
+  percentile(p) {
+    if (p>1 || p<0) throw 'p must be between 0 and 1!';
+    this.initPercentile();
+    return this.matchPercentile(p * this.priorSum, 0, this.count);
+  }
+  matchPercentile(p, min, max) {
+    // binary search
+    if (max <= min) return this.sortedCDF[min][0];
+    var mid = Math.trunc((max + min) / 2);
+    if (p > this.sortedCDF[mid][1]) {
+      return this.matchPercentile(p, mid + 1, max);
+    } else if (p < this.sortedCDF[mid][1]) {
+      return this.matchPercentile(p, min, mid);
+    } else {
+      return (Number(this.sortedCDF[mid][0]) + Number(this.sortedCDF[mid+1][0])) / 2;
+    }
+  }
   initSampling() {
     if (!this.unsortedCDF) {
       this.unsortedCDF = Object.entries(this.base); // don't sort to favor binary search
@@ -104,7 +128,7 @@ var PMF = class PMF {
     // form new pmf by concatenating 2 pmfs
     let accumulator = new Accumulator();
     Object.entries(this.base).forEach(([v, p]) => accumulator.add(v, p));
-    Object.entries(pmf).forEach(([v, p]) => accumulator.add(v, p));
+    Object.entries(pmf.base).forEach(([v, p]) => accumulator.add(v, p));
     return new PMF(accumulator.base);
   }
   filter(f) {
@@ -114,6 +138,9 @@ var PMF = class PMF {
       if (f(v)) accumulator.add(v, p);
     });
     return new PMF(accumulator.base);
+  }
+  expectation(f) {
+    return Object.entries(this.base).reduce((p,x)=>p+f(x[0])*x[1],0)/this.priorSum;
   }
   static fromSample(sample) {
     return new PMF(sample.reduce((p,x)=>p.attr(x, (p[x] || 0)+1), Object()));
