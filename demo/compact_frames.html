@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<title>Compact Frames</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.0/vue/layout.css" />
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.0/vue/control.css" />
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.0/lib/vue.global.prod.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.0/common/builtin.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.0/common/global.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.0/client/modal.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.0/client/shortcuts.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.0/client/quick_vue.js"></script>
+<style id="vue-head">
+* {
+  outline: none;
+  box-sizing: border-box;
+  margin: 0px;
+}
+div.grid {
+  width: 100vw;
+  height: 100vh;
+  display: grid;
+  align-items: stretch;
+  justify-items: stretch;
+  grid-template-areas: {{ all.ui.layout }};
+  /* grid-template-areas:
+    "a a a b b b"
+    "c c d d e e"; */
+  *:nth-child(1) {grid-area: a;}
+  *:nth-child(2) {grid-area: b;}
+  *:nth-child(3) {grid-area: c;}
+  *:nth-child(4) {grid-area: d;}
+  *:nth-child(5) {grid-area: e;}
+  *:nth-child(6) {grid-area: f;}
+  *:nth-child(7) {grid-area: g;}
+  *:nth-child(8) {grid-area: h;}
+  *:nth-child(9) {grid-area: i;}
+}
+label > textarea {
+  width: 400px;
+  &[name=frames] {
+    width: 1000px;
+    height: 400px;
+  }
+}
+</style>
+<script type="text/javascript">
+async function initPage() {
+  g.ui = {
+    contextmenus: [],
+    frames: [],
+    layout: `"a b" "c d"`,
+    modals: [],
+  };
+  globalThis.all = g;
+  
+  Vue.endAddOn.useBasicMethods();
+  await Vue.endAddOn.load();
+  Vue.endAddOn.createApp({
+    mountSelectors: ['#vue-head','#screen'],
+  });
+  
+  configFrames();
+}
+async function configFrames() {
+  try {
+    let od = ModalScreen.showInput({
+      caption: 'Frame Configuration',
+      message: [
+        'Define the grid areas and list the frames (one line one frame).',
+        'a=1st frame, b=2nd frame, and so on...',
+      ].join(' '),
+      fields: {
+        layout: {name: 'Layout', type: 'textarea', default: 'a b\nc d'},
+        frames: {name: 'Frames', type: 'textarea', default: [ 
+          '<iframe src="https://www.youtube.com/embed/9c3MB8VsyYI" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"></iframe>',
+          '<iframe src="https://www.youtube.com/embed/AuwZPnHs0WU" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"></iframe>',
+          '<iframe src="https://www.youtube.com/embed/kyyscmuStWQ" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"></iframe>',
+          '<iframe src="https://www.youtube.com/embed/8wUXaTcU0Jk" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"></iframe>',
+          //'<iframe src="https://www.youtube.com/embed/xGtk9LOAhXM" title="【ロックマンX4】完全初見★へたっぴロックマンX4！エックス編ラスダン開始！ #4 【博衣こより/ホロライブ】" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>',
+        ].join('\n')},
+      },
+    });
+    await Vue.nextTick();
+    Array.from(document.getElementsByTagName('textarea')).forEach(x=>x.spellcheck = false);
+    od = await od;
+    console.log(od);
+    const parser = new DOMParser();
+    all.ui.layout = od.layout.split('\n').map(x=>`"${x}"`).join(' ');
+    all.ui.frames = od.frames.split('\n').map(frame=>{
+      const node = parser.parseFromString(frame, 'text/html').body.firstChild;
+      console.log(node);
+      return {
+        src: node.src,
+        allow: node.allow,
+        title: node.title,
+      }
+    });
+    return true;
+  }
+  catch (e) {return false;}
+}
+</script>
+</head>
+<vueTemplate id="t-screen">
+  <div class="grid">
+    <iframe v-for="frame in all.ui.frames"
+      :src="frame.src"
+      :allow="frame.allow"
+      frameborder="0"
+      allowfullscreen
+      ></iframe>
+  </div>
+  <t-modal :w="all.ui.modals"></t-modal>
+  <t-contextmenu :w="all.ui.contextmenus"></t-contextmenu>
+</vueTemplate>
+<body onload="initPage();">
+<div id="screen"><t-screen :all="all"></t-screen></div>
+</body>
+</html>
