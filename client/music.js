@@ -170,6 +170,7 @@
       super(ctx, options);
     }
     get playbackTime() {
+      if (this.pausePlaybackTime) return this.pausePlaybackTime;
       return this.ctx.currentTime - this.ctxOffset;
     }
     async load(input) {
@@ -183,6 +184,10 @@
     loadFile(file) {
       return this.load(file);
     }
+    pause() {
+      if (!this.pausePlaybackTime) this.pausePlaybackTime = this.playbackTime;
+      this.stop();
+    }
     restart(when, offset, duration) {
       this.stop();
       this.start(when, offset, duration);
@@ -195,13 +200,16 @@
       }
       this.buffer = new AudioBufferSourceNode(this.ctx, this.options);
       this.buffer.addEventListener('ended', e=>{
+        if (this.pausePlaybackTime) return; // try not to treat pause as end
         if (e.target == this.buffer) this.dispatchEvent(new CustomEvent('ended'));
       });
       this.buffer.buffer = this.audioData;
       this.buffer.connect(this.analyser);
       this.unmute();
-      this.buffer.start(when, offset, duration);
-      this.ctxOffset = Math.max(when || 0, this.ctx.currentTime) - (offset || 0);
+      const offsetFinal = offset??this.pausePlaybackTime??0;
+      this.buffer.start(when, offsetFinal, duration);
+      this.ctxOffset = Math.max(when || 0, this.ctx.currentTime) - offsetFinal;
+      delete this.pausePlaybackTime;
       this.dispatchEvent(new CustomEvent('started'));
     }
     stop() {
