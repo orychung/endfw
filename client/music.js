@@ -42,6 +42,13 @@
       let date = new Date(time * 1000);
       return date.getMinutes()+':'+date.getSeconds().toString().padStart(2,'0');
     }
+    static noteFromFrequency(frequency) {
+      let keyFromC4 = Math.log2(frequency/440)*12+9.5;
+      let octave = Math.floor(keyFromC4/12)+4;
+      let note = OCTAVE4[Math.floor(keyFromC4)-(octave-4)*12][0];
+      let delta = Math.floor((keyFromC4 - Math.floor(keyFromC4) - 0.5)*100)/100;
+      return note+octave+((delta==0)?(''):(delta>0)?('+'+delta):(delta));
+    }
   }
 
   class MusicalItem extends EventTarget {
