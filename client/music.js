@@ -1,5 +1,5 @@
 (()=>{
-  const RAMP_SHARP_GAP = 0.005;
+  const RAMP_SHARP_GAP = 0.01;
   const ZERO_GAIN_PAD = 0.0001;
   const OCTAVE4 = [
     ['C', 261.6255653005986],
@@ -165,7 +165,7 @@
       }
       if (!(i in this.notePlayers)) return;
       if (dB < dBTruncate) dB = -99;
-      this.notePlayers[i].setGainAtTime((dB+99)/100, time);
+      this.notePlayers[i].setGainAtTime((dB+99)/100, time+RAMP_SHARP_GAP);
     }
     setSpectrumAtTime(spectrum, time=this.ctx.currentTime) {
       spectrum.forEach((dB,i)=>this.setNoteStrengthAtTime(i, dB, time));
