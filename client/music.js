@@ -1,5 +1,5 @@
 (()=>{
-  const RAMP_SHARP_GAP = 0.005;
+  const RAMP_SHARP_GAP = 0.01;
   const ZERO_GAIN_PAD = 0.0001;
   const OCTAVE4 = [
     ['C', 261.6255653005986],
@@ -41,6 +41,13 @@
     static timeDisplay(time) {
       let date = new Date(time * 1000);
       return date.getMinutes()+':'+date.getSeconds().toString().padStart(2,'0');
+    }
+    static noteFromFrequency(frequency) {
+      let keyFromC4 = Math.log2(frequency/440)*12+9.5;
+      let octave = Math.floor(keyFromC4/12)+4;
+      let note = OCTAVE4[Math.floor(keyFromC4)-(octave-4)*12][0];
+      let delta = Math.floor((keyFromC4 - Math.floor(keyFromC4) - 0.5)*100)/100;
+      return note+octave+((delta==0)?(''):(delta>0)?('+'+delta):(delta));
     }
   }
 
@@ -158,7 +165,7 @@
       }
       if (!(i in this.notePlayers)) return;
       if (dB < dBTruncate) dB = -99;
-      this.notePlayers[i].setGainAtTime((dB+99)/100, time);
+      this.notePlayers[i].setGainAtTime((dB+99)/100, time+RAMP_SHARP_GAP);
     }
     setSpectrumAtTime(spectrum, time=this.ctx.currentTime) {
       spectrum.forEach((dB,i)=>this.setNoteStrengthAtTime(i, dB, time));
@@ -170,6 +177,7 @@
       super(ctx, options);
     }
     get playbackTime() {
+      if (this.pausePlaybackTime) return this.pausePlaybackTime;
       return this.ctx.currentTime - this.ctxOffset;
     }
     async load(input) {
@@ -183,6 +191,10 @@
     loadFile(file) {
       return this.load(file);
     }
+    pause() {
+      if (!this.pausePlaybackTime) this.pausePlaybackTime = this.playbackTime;
+      this.stop();
+    }
     restart(when, offset, duration) {
       this.stop();
       this.start(when, offset, duration);
@@ -195,13 +207,16 @@
       }
       this.buffer = new AudioBufferSourceNode(this.ctx, this.options);
       this.buffer.addEventListener('ended', e=>{
+        if (this.pausePlaybackTime) return; // try not to treat pause as end
         if (e.target == this.buffer) this.dispatchEvent(new CustomEvent('ended'));
       });
       this.buffer.buffer = this.audioData;
       this.buffer.connect(this.analyser);
       this.unmute();
-      this.buffer.start(when, offset, duration);
-      this.ctxOffset = Math.max(when || 0, this.ctx.currentTime) - (offset || 0);
+      const offsetFinal = offset??this.pausePlaybackTime??0;
+      this.buffer.start(when, offsetFinal, duration);
+      this.ctxOffset = Math.max(when || 0, this.ctx.currentTime) - offsetFinal;
+      delete this.pausePlaybackTime;
       this.dispatchEvent(new CustomEvent('started'));
     }
     stop() {
