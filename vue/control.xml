@@ -79,7 +79,7 @@
       <select v-else-if="cfg.type=='select'" :name="i" v-model="od[i]">
         <option v-for="option,k in cfg.options" :value="k">{{ option }}</option>
       </select>
-      <textarea v-else-if="cfg.type=='textarea'" :name="i" v-model="od[i]"></textarea>
+      <textarea v-else-if="cfg.type=='textarea'" :name="i" v-model="od[i]" @keydown.enter.stop=""></textarea>
       <input v-else :name="i" :type="cfg.type" :autocomplete="cfg.autocomplete" :size="cfg.size" v-model="od[i]"></input>
     </label>
     </grid-row>
