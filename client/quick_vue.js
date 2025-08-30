@@ -98,12 +98,13 @@ Vue.endAddOn.directives = {
       };
 
       const onDrag = (e) => {
+        const SENSITIVITY_FACTOR = 1; // Higher to move more sensitively
         if (!isDragging) return;
         e.preventDefault();
         const x = e.pageX - el.offsetLeft;
         const y = e.pageY - el.offsetTop;
-        const walkX = (x - startX) * 1.5; // Adjust sensitivity
-        const walkY = (y - startY) * 1.5;
+        const walkX = (x - startX) * SENSITIVITY_FACTOR;
+        const walkY = (y - startY) * SENSITIVITY_FACTOR;
         el.scrollLeft = scrollLeft - walkX;
         el.scrollTop = scrollTop - walkY;
       };
