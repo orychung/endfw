@@ -53,6 +53,98 @@ Vue.endAddOn.useBasicMethods = function useBasicMethods() {
   Object.assign(this.commonMethods, this.basicMethods);
 }
 
+Vue.endAddOn.directives = {
+  nodeRef: {
+    updated(el, binding, vnode) {
+      if (!binding.value) return;
+      // od = one of the props of the context
+        // LIMITATION: cannot assign vnode to this object since it seems like a clone
+      // k1 = key to reach the containing object
+        // TODO: explore way to avoid this restriction to have a child object
+      // k2 = key to store the instance (vnode with proxy)
+      const [od, k1, k2] = binding.value;
+      if (od) od[k1][k2??'vnode'] = binding.instance;
+    }
+  },
+  focus: {
+    // When the bound element is mounted into the DOM...
+    mounted(el) {
+      // Focus the element
+      el.focus()
+    }
+  },
+  pannable: {
+    mounted(el) {
+      let isDragging = false;
+      let startX, startY, scrollLeft, scrollTop;
+
+      // Ensure the element has overflow enabled for scrolling
+      el.style.overflow = 'auto';
+      el.style.cursor = 'grab';
+
+      const startDragging = (e) => {
+        isDragging = true;
+        el.style.cursor = 'grabbing';
+        startX = e.pageX - el.offsetLeft;
+        startY = e.pageY - el.offsetTop;
+        scrollLeft = el.scrollLeft;
+        scrollTop = el.scrollTop;
+        e.preventDefault();
+      };
+
+      const stopDragging = () => {
+        isDragging = false;
+        el.style.cursor = 'grab';
+      };
+
+      const onDrag = (e) => {
+        if (!isDragging) return;
+        e.preventDefault();
+        const x = e.pageX - el.offsetLeft;
+        const y = e.pageY - el.offsetTop;
+        const walkX = (x - startX) * 1.5; // Adjust sensitivity
+        const walkY = (y - startY) * 1.5;
+        el.scrollLeft = scrollLeft - walkX;
+        el.scrollTop = scrollTop - walkY;
+      };
+
+      // Mouse events
+      el.addEventListener('mousedown', startDragging);
+      el.addEventListener('mousemove', onDrag);
+      el.addEventListener('mouseup', stopDragging);
+      el.addEventListener('mouseleave', stopDragging);
+
+      // Touch events for mobile support
+      el.addEventListener('touchstart', (e) => {
+        const touch = e.touches[0];
+        startDragging({ pageX: touch.pageX, pageY: touch.pageY, preventDefault: () => e.preventDefault() });
+      });
+      el.addEventListener('touchmove', (e) => {
+        const touch = e.touches[0];
+        onDrag({ pageX: touch.pageX, pageY: touch.pageY, preventDefault: () => e.preventDefault() });
+      });
+      el.addEventListener('touchend', stopDragging);
+
+      // Store cleanup function
+      el._pannableCleanup = () => {
+        el.removeEventListener('mousedown', startDragging);
+        el.removeEventListener('mousemove', onDrag);
+        el.removeEventListener('mouseup', stopDragging);
+        el.removeEventListener('mouseleave', stopDragging);
+        el.removeEventListener('touchstart', startDragging);
+        el.removeEventListener('touchmove', onDrag);
+        el.removeEventListener('touchend', stopDragging);
+      };
+    },
+    unmounted(el) {
+      // Cleanup event listeners
+      if (el._pannableCleanup) {
+        el._pannableCleanup();
+      }
+    }
+  },
+};
+
 Vue.endAddOn.loadTemplateURLs = async function loadTemplateURLs(...templateURLs) {
 try {
   let parser = new DOMParser();
@@ -69,6 +161,7 @@ Vue.endAddOn.createApp = function(options) {
   let allComputed = Object.assign({}, Vue.endAddOn.commonComputed, options.computed);
   let allMethods = Object.assign({}, Vue.endAddOn.commonMethods, options.methods);
   let allTemplates = options.templates ?? Vue.endAddOn.templates;
+  let allDirectives = options.directives ?? Vue.endAddOn.directives;
   allTemplates.forEach(x=>{
     let templateType = x.type?Vue.endAddOn.templateTypes[x.type]:{};
     let allComputed = Object.assign({}, Vue.endAddOn.commonComputed, templateType.computed);
@@ -96,25 +189,7 @@ Vue.endAddOn.createApp = function(options) {
       },
     });
     allTemplates.forEach(x=>app.component(x.id, x.details));
-    app.directive('nodeRef', {
-      updated(el, binding, vnode) {
-        if (!binding.value) return;
-        // od = one of the props of the context
-          // LIMITATION: cannot assign vnode to this object since it seems like a clone
-        // k1 = key to reach the containing object
-          // TODO: explore way to avoid this restriction to have a child object
-        // k2 = key to store the instance (vnode with proxy)
-        const [od, k1, k2] = binding.value;
-        if (od) od[k1][k2??'vnode'] = binding.instance;
-      }
-    });
-    app.directive('focus', {
-      // When the bound element is mounted into the DOM...
-      mounted(el) {
-        // Focus the element
-        el.focus()
-      }
-    });
+    Object.entries(allDirectives).forEach(([id, details])=>app.directive(id, details));
     app.vm = app.mount(selector);
     globalThis.all = app.vm.all;
     return app;
