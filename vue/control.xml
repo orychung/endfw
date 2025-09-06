@@ -24,7 +24,7 @@
         v-for="d,i in (od.filter?.mapArray() || []).reduce((p,x)=>p.filterArray(x), od.data)"
         @click="d.onclick?.($event)"
         @contextmenu="showContextmenu(d, $event)">
-        <div v-for="c in od.columns" :class="c.class" @click="c.onclick?.(d)">
+        <div v-for="c in od.columns" :id="c.id" :class="c.class" @click="c.onclick?.(d)">
           <template v-if="c.display">{{ c.display(d) }}</template>
           <component v-else :is="c.template" :od="{grid: od, column: c, row: d}" :all="all"></component>
         </div>
