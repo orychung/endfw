@@ -41,10 +41,37 @@
   cursor: pointer;
 }
 .scroll-h {
-  overflow: auto;
+  overflow: auto;Failed
   max-width: 100%;
 }
 .scroll-v {
   overflow: auto;
   max-height: 100%;
+}
+
+/* drop-zone */
+.drag-over {
+  position: relative;           /* Required for ::after positioning */
+  &::after {
+    content: 'Drop Here';
+    
+    position: absolute;
+    inset: 0;                    /* Covers entire parent perfectly */
+    
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    background: hsla(210, 80%, 90%, 0.5);
+    color: hsl(210, 80%, 30%);
+    font-size: 1.5rem;
+    font-weight: 600;
+    
+    pointer-events: none;        /* Allows drop event to reach parent */
+    border-radius: inherit;      /* Matches parent's border radius */
+    
+    /* Optional nice touch */
+    backdrop-filter: blur(1px);
+    border: 3px dashed hsla(210, 80%, 70%, 0.5);
+  }
 }

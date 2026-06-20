@@ -47,31 +47,82 @@ Vue.endAddOn.basicMethods = {
     e.preventDefault();
     return true;
   },
-}
+};
 
 Vue.endAddOn.useBasicMethods = function useBasicMethods() {
   Object.assign(this.commonMethods, this.basicMethods);
-}
+};
 
+(()=>{
+function nodeRefRefresh(el, binding, vnode) {
+  if (!binding.value) return;
+  // od = one of the props of the context
+    // LIMITATION: cannot assign vnode to this object since it seems like a clone
+  // k1 = key to reach the containing object
+    // TODO: explore way to avoid this restriction to have a child object
+  // k2 = key to store the instance (vnode with proxy)
+  const [od, k1, k2] = binding.value;
+  if (od) od[k1][k2??'vnode'] = binding.instance;
+}
 Vue.endAddOn.directives = {
   nodeRef: {
+    mounted(el, binding, vnode) {
+      nodeRefRefresh(el, binding, vnode);
+    },
     updated(el, binding, vnode) {
-      if (!binding.value) return;
-      // od = one of the props of the context
-        // LIMITATION: cannot assign vnode to this object since it seems like a clone
-      // k1 = key to reach the containing object
-        // TODO: explore way to avoid this restriction to have a child object
-      // k2 = key to store the instance (vnode with proxy)
-      const [od, k1, k2] = binding.value;
-      if (od) od[k1][k2??'vnode'] = binding.instance;
+      nodeRefRefresh(el, binding, vnode);
+    },
+  },
+  dropZone: {
+    mounted(el, binding) {
+      const value = binding.value || {};
+      const options = typeof value === 'function' ? { onDrop: value } : value;
+      const dragOverClass = options.dragOverClass || 'drag-over';
+
+      const handleDragEnter = (e) => {
+        e.preventDefault();
+        el.classList.add(dragOverClass);
+      }
+
+      const handleDragOver = (e) => {
+        e.preventDefault();
+        if (options.onDragOver) options.onDragOver(e);
+      }
+
+      const handleDragLeave = (e) => {
+        e.preventDefault();
+        // Only remove when truly leaving the element
+        if (!el.contains(e.relatedTarget)) {
+          el.classList.remove(dragOverClass);
+        }
+      }
+
+      const handleDrop = (e) => {
+        e.preventDefault();
+        el.classList.remove(dragOverClass);
+
+        const files = e.dataTransfer?.files ? Array.from(e.dataTransfer.files) : null;
+        if (options.onDrop) options.onDrop(files, e);
+      }
+
+      el.addEventListener('dragenter', handleDragEnter);
+      el.addEventListener('dragover', handleDragOver);
+      el.addEventListener('dragleave', handleDragLeave);
+      el.addEventListener('drop', handleDrop);
+
+      el._dropZoneCleanup = () => {
+        el.removeEventListener('dragenter', handleDragEnter);
+        el.removeEventListener('dragover', handleDragOver);
+        el.removeEventListener('dragleave', handleDragLeave);
+        el.removeEventListener('drop', handleDrop);
+      }
+    },
+    unmounted(el) {
+      if (el._dropZoneCleanup) el._dropZoneCleanup();
     }
   },
   focus: {
-    // When the bound element is mounted into the DOM...
-    mounted(el) {
-      // Focus the element
-      el.focus()
-    }
+    mounted(el) {el.focus();}
   },
   pannable: {
     mounted(el) {
@@ -145,6 +196,7 @@ Vue.endAddOn.directives = {
     }
   },
 };
+})();
 
 Vue.endAddOn.loadTemplateURLs = async function loadTemplateURLs(...templateURLs) {
 try {
@@ -155,7 +207,7 @@ try {
     Vue.endAddOn.templates.push(...templates);
   }
 } catch (e) {console.log(e);}
-}
+};
 
 Vue.endAddOn.createApp = function(options) {
   if (!options.mountSelectors) return console.error('mountSelectors must be specified');

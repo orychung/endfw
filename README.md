@@ -16,10 +16,10 @@ A minimalist JS framework library for browser and node.js framework
 ### in browser
 Load via jsdelivr CDN:
 ```html
-<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.7.0/common/builtin.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.7.0/client/builtin.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.7.0/client/shortcuts.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.7.0/client/music.js" charset="utf-8"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.3/common/builtin.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.3/client/builtin.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.3/client/shortcuts.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.3/client/music.js" charset="utf-8"></script>
 ```
 
 * Client scripts can be included on a need basis
@@ -29,13 +29,13 @@ Load via jsdelivr CDN:
 
 In header:
 ```html
-<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/orychung/endfw@0.7.0/vue/control.css" />
-<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/orychung/endfw@0.7.0/vue/layout.css" />
-<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.7.0/common/builtin.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.7.0/common/global.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.7.0/client/builtin.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.7.0/client/shortcuts.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.7.0/client/quick_vue.js"></script>
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.3/vue/control.css" />
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.3/vue/layout.css" />
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.3/common/builtin.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.3/common/global.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.3/client/builtin.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.3/client/shortcuts.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.3/client/quick_vue.js"></script>
 ```
 
 In onload listener:
@@ -70,7 +70,7 @@ In body:
 
 ### in node
 ```bash
-npm install github:orychung/endfw@0.7.0
+npm install github:orychung/endfw@0.8.3
 ```
 ```javascript
 globalThis.endfw = require('endfw');

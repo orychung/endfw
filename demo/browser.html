@@ -147,6 +147,7 @@ async function initPage() {
     themeFaceHue: 120,
     outcome: {},
     contextmenus: [],
+    dropZoneText: 'some text, drop something here...',
   };
   globalThis.all = g;
   
@@ -163,6 +164,11 @@ async function initPage() {
 </head>
 <body class="full-size" onload="initPage();">
 <vueTemplates>
+<vueTemplate id="v-drop-zone">
+  <div v-node-ref="[all, 'ui', 'dropZone']" v-drop-zone>
+    <p>{{ all.ui.dropZoneText }}</p>
+  </div>
+</vueTemplate>
 <vueTemplate id="v-screen">
   <div class="full-size" v-focus tabindex="-1"
     @contextmenu="showContextmenu({},$event,{menuButtons:[
@@ -170,6 +176,7 @@ async function initPage() {
     ]});"
     @keydown="keydown"
     @paste="paste"
+    v-node-ref="[all, 'ui', 'screen']"
     >
     <table>
     <thead>
@@ -192,6 +199,7 @@ async function initPage() {
     </tbody>
     </table>
   </div>
+  <v-drop-zone :all="all"></v-drop-zone>
   <screen-layer style="--base-z-index:20;">
     <t-cover :all="all"></t-cover>
     <t-contextmenu :all="all" :w="all.ui.contextmenus"></t-contextmenu>
