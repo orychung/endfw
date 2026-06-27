@@ -189,20 +189,45 @@ class Returner {
       fs.createReadStream(resourcePath).pipe(this.res);
     }
   }
-  async file(filePath, mimeType='auto', standalone=false) {
+  async file(filePath, options={}, standalone=false) {
+    if (!(options instanceof Object)) options = {mimeType: options}; // backward compatibility
+    let {mimeType, rangeHeader} = options;
+    
     // this.server.log('[200] return file: '+filePath);
     var resourcePath = this.server.checkResource(filePath, Server.cbNotFound(this, filePath));
     if (resourcePath) {
-      if (mimeType == 'auto') {
+      if (mimeType == null) {
         var ext = resourcePath.split('.').slice(-1)[0].toLowerCase();
         mimeType = mime.getType(ext) || 'text/plain';
       }
-      if (!mimeType.startsWith('text/')) {
-        this.closeHead(200, {'Content-Type': mimeType});
-        fs.createReadStream(resourcePath).pipe(this.res);
-        return;
-      }
       try {
+        if (rangeHeader) {
+          const stat = await fs.promises.stat(resourcePath);
+          if (!stat.isFile()) throw 'path is not a file';
+          if (stat.size == 0) {
+            this.closeHead(204, {'Content-Type': mimeType})
+            this.res.end();
+            return
+          }
+          const CHUNK_SIZE = 1048576 * 4; // 4MB per chunk
+          const start = Number(rangeHeader.replace(/\D/g, ""));
+          const end = Math.min(start + CHUNK_SIZE, stat.size - 1);
+          const contentLength = end - start + 1;
+          const headers = {
+            "Content-Range": `bytes ${start}-${end}/${stat.size}`,
+            "Accept-Ranges": "bytes",
+            "Content-Length": contentLength,
+            "Content-Type": mimeType,
+          };
+          this.closeHead(206, headers);
+          fs.createReadStream(resourcePath, {start, end}).pipe(this.res);
+          return;
+        }
+        if (!mimeType.startsWith('text/')) {
+          this.closeHead(200, {'Content-Type': mimeType});
+          fs.createReadStream(resourcePath).pipe(this.res);
+          return;
+        }
         var html = fs.readFileSync(resourcePath).toString();
         if (standalone) {
         // perform content substitution to make the page standalone
