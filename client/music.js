@@ -15,6 +15,11 @@
     ['B♭', 466.1637615180899],
     ['B', 493.8833012561241]
   ];
+  AudioNode.defineMethod('setParam', function setParam(name, value, delay = 0) {
+    let valueToUse = value;
+    if (name == 'gain') valueToUse = Math.max(valueToUse, ZERO_GAIN_PAD);
+    this[name].exponentialRampToValueAtTime(valueToUse, this.context.currentTime + RAMP_SHARP_GAP + delay);
+  });
   class Music {
     static notes = [
       ...OCTAVE4.map(x=>Object({name: x[0]+'2', frequency: x[1]*(2**-2)})),
@@ -72,7 +77,7 @@
         }
       });
       this.gain = ctx.createGain();
-      this.gain.gain.exponentialRampToValueAtTime(this.options.gain+ZERO_GAIN_PAD, ctx.currentTime+RAMP_SHARP_GAP);
+      this.gain.setParam('gain', this.options.gain);
       this.analyser = this.gain;
     }
     get gainValue() {
@@ -80,7 +85,7 @@
     }
     set gainValue(value) {
       this.options.gain = value;
-      this.setGainAtTime(value);
+      this.gain.setParam('gain', value);
     }
     useAnalyser(options={}) {
       if (this.analyser != this.gain) this.analyser.disconnect();

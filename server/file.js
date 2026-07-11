@@ -69,7 +69,7 @@ class FileSegment {
         if (!this.tokenValidator(token, req)) return this.errorCallback(res, undefined, 403, "not authorised");
       }
       
-      let action = this.actionExp(req);
+      let action = this.actionExp(req); // e.g. readFile
       if (!(typeof this[action] == 'function')) return this.errorCallback(res, undefined, 404, "action not found");
       let param = this.paramExp(req);
       

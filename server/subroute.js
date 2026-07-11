@@ -101,8 +101,10 @@ class Subroute {
           );
           if (mwDef.mw instanceof Subroute) {
             mwDef.mw.beginRoute(req, res, localNext);
-          } else {
+          } else if (mwDef.mw instanceof Function) {
             mwDef.mw(req, res, localNext);
+          } else {
+            console.error('mwDef.mw is not a Subroute/function', {name: this.name, mwDef, mwIndex});
           };
           await nextCalled.promise;
           if (!nextCalled.fired) return;

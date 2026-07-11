@@ -70,10 +70,10 @@
       <span v-if="cfg.name">{{ cfg.name }}&nbsp;</span>
       <div v-if="cfg.type=='range'">
         <input type="range" :name="i" v-model="od[i]"
-          :max="cfg.max" :min="cfg.min"
+          :max="cfg.max" :min="cfg.min" :step="cfg.step ?? 1"
           style="margin-right: 10px;"></input>
         <input type="number" :name="i+'-text'" v-model="od[i]"
-          :max="cfg.max" :min="cfg.min"
+          :max="cfg.max" :min="cfg.min" :step="cfg.step ?? 1"
           :style="{width:cfg.max.toString().length+1.5+'em'}"></input>
       </div>
       <select v-else-if="cfg.type=='select'" :name="i" v-model="od[i]">
