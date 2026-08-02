@@ -148,6 +148,9 @@ async function initPage() {
     outcome: {},
     contextmenus: [],
     dropZoneText: 'some text, drop something here...',
+    testInput: {
+      color: '#333333',
+    },
   };
   globalThis.all = g;
   
@@ -167,6 +170,7 @@ async function initPage() {
 <vueTemplate id="v-drop-zone">
   <div v-node-ref="[all, 'ui', 'dropZone']" v-drop-zone>
     <p>{{ all.ui.dropZoneText }}</p>
+    <input type="color" v-model="all.ui.testInput.color"></input>
   </div>
 </vueTemplate>
 <vueTemplate id="v-screen">

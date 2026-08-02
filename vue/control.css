@@ -80,6 +80,10 @@ grid-heading {
   font-weight: bold;
   user-select: none;
 }
+grid-heading > div {
+  top: 0px;
+  position: sticky;
+}
 grid-row, grid-heading {
   display: contents;
   > :first-child {
@@ -109,7 +113,7 @@ screen-layer {
   }
 }
 
-vueTemplate {
+vuetemplates, vuetemplate {
   display: none;
 }
 
