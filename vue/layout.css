@@ -1,25 +1,29 @@
-/* class shortcuts */
-.absolute {
-  position: absolute;
-}
-.block {
-  display: block;
-}
-.contents {
-  display: contents;
-}
-.flex {
-  display: flex;
-}
+/* shorthand classes for frequently used layouting CSS */
+  .contain-content { contain: content; }
+  /* -------------------- */
+  .pointer { cursor: pointer; }
+  /* -------------------- */
+  .display-none { display: none; }
+  .block { display: block; }
+  .contents { display: contents; }
+  .flex { display: flex; }
+  /* -------------------- */
+  .absolute { position: absolute; }
+  .relative { position: relative; }
+  .sticky { position: sticky; }
+  /* -------------------- */
+  .top-0 {top: 0;}
+  .right-0 {right: 0;}
+  .bottom-0 {bottom: 0;}
+  .left-0 {left: 0;}
+  /* -------------------- */
+
+/* flex */
 .flex.child-grow > * {
   flex-grow: 1;
 }
-.flex.col {
-  flex-direction: column;
-}
-.flex.row {
-  flex-direction: row;
-}
+.flex.col, .flex.col { flex-direction: column; }
+.flex.row { flex-direction: row; }
 .flex-center {
   align-items: center;
   justify-items: center;
@@ -37,16 +41,31 @@
 .full-size.absolute {
   left: 0px; top: 0px;
 }
-.pointer {
-  cursor: pointer;
-}
+
+/* scrollbar */
 .scroll-h {
-  overflow: auto;Failed
+  overflow-x: auto;
   max-width: 100%;
 }
 .scroll-v {
-  overflow: auto;
+  overflow-y: auto;
   max-height: 100%;
+}
+
+/* bar */
+.bar {
+  padding: var(--spacing);
+  background: hsl(var(--theme-face-hue), 85%, 80%);
+}
+.bar.horizontal {
+  > *:nth-child(n+2) {
+    margin-left: var(--spacing);
+  }
+}
+.bar.vertical {
+  > *:nth-child(n+2) {
+    margin-top: var(--spacing);
+  }
 }
 
 /* drop-zone */
@@ -73,5 +92,18 @@
     /* Optional nice touch */
     backdrop-filter: blur(1px);
     border: 3px dashed hsla(210, 80%, 70%, 0.5);
+  }
+}
+
+/* rounded tile with heading */
+.tile {
+  border-radius: 1em;
+  background: hsla(var(--theme-face-hue), 80%, 60%, 0.5);
+  padding: var(--spacing);
+  > label:nth-child(1) {
+    display: block;
+    --font-scale: 0.8;
+    font-weight: 600;
+    padding: 0 var(--spacing);
   }
 }

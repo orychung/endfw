@@ -68,13 +68,11 @@
     <grid-row class="modal-field">
     <label>
       <span v-if="cfg.name">{{ cfg.name }}&nbsp;</span>
-      <div v-if="cfg.type=='range'">
+      <div v-if="cfg.type=='range'" class="range-field">
         <input type="range" :name="i" v-model="od[i]"
-          :max="cfg.max" :min="cfg.min" :step="cfg.step ?? 1"
-          style="margin-right: 10px;"></input>
+          :max="cfg.max" :min="cfg.min" :step="cfg.step ?? 1"></input>
         <input type="number" :name="i+'-text'" v-model="od[i]"
-          :max="cfg.max" :min="cfg.min" :step="cfg.step ?? 1"
-          :style="{width:cfg.max.toString().length+1.5+'em'}"></input>
+          :max="cfg.max" :min="cfg.min" :step="cfg.step ?? 1"></input>
       </div>
       <select v-else-if="cfg.type=='select'" :name="i" v-model="od[i]">
         <option v-for="option,k in cfg.options" :value="k">{{ option }}</option>

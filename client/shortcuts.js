@@ -47,7 +47,10 @@ var http = new Proxy(httpBase, {
       resp = await fetch(url, target.options);
     }
     let result = resp;
-    if (!result.ok) return result;
+    if (!result.ok) {
+      if (target.localOptions.returnType == 'asResponse') return result;
+      throw result;
+    }
     if (target.localOptions.returnType == 'asText') {
       result = await result.text();
       if (resp.headers.get('Content-Type') == 'application/json') result = JSON.parse(result);

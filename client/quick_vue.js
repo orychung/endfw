@@ -17,6 +17,10 @@ Vue.endAddOn = {
   */
   rootPath: document.currentScript.src.replace(/\/client\/quick_vue\.js.*/,'/vue/'),
   templates: [],
+  templateURLs: [
+    'control.xml',
+    'recursive.xml',
+  ],
   templateTypes: {},
 };
 
@@ -199,14 +203,16 @@ Vue.endAddOn.directives = {
 })();
 
 Vue.endAddOn.loadTemplateURLs = async function loadTemplateURLs(...templateURLs) {
-try {
   let parser = new DOMParser();
   for (var i=0;i<templateURLs.length;i++) {
-    let xml = parser.parseFromString(await http.get(templateURLs[i]), 'text/html');
-    let templates = Array.from(xml.querySelectorAll('vueTemplate'));
-    Vue.endAddOn.templates.push(...templates);
+    await http.get(templateURLs[i])
+    .then(result=>{
+      let xml = parser.parseFromString(result, 'text/html');
+      let templates = Array.from(xml.querySelectorAll('vueTemplate'));
+      Vue.endAddOn.templates.push(...templates);
+    })
+    .catch(e=>console.error('[endAddOn] fail to load template URL:', e));
   }
-} catch (e) {console.log(e);}
 };
 
 Vue.endAddOn.createApp = function(options) {
@@ -231,7 +237,7 @@ Vue.endAddOn.createApp = function(options) {
     let app = Vue.createApp({
       computed: allComputed,
       methods: allMethods,
-      data: ()=>Object({all: globalThis.all}),
+      data: options.data ?? (()=>Object({all: globalThis.all})),
       errorCaptured(error, compInst, errorInfo) {
         console.error("error: ", error);
         console.error("compInst: ", compInst);
@@ -253,8 +259,7 @@ Vue.endAddOn.createApp = function(options) {
 Vue.endAddOn.load = async function load() {
   let vueRoot = Vue.endAddOn.rootPath;
   await Vue.endAddOn.loadTemplateURLs(
-    vueRoot + 'control.xml',
-    vueRoot + 'recursive.xml',
+    ...Vue.endAddOn.templateURLs.map(x=>`${vueRoot}${x}`)
   );
   let templates = Array.from(document.querySelectorAll('vueTemplate'));
   Vue.endAddOn.templates.push(...templates.map(x=>Object({

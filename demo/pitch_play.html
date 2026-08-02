@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Video Player with Pitch Shift Control</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='.2 -.8 1 1'><text font-size=&quot;1&quot;>🎬</text></svg>" />
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.5/vue/layout.css" />
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.5/lib/vue.global.prod.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.5/common/builtin.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.5/client/quick_vue.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.5/client/shortcuts.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.5/client/music.js" charset="utf-8"></script>
+<script type="module">
+import {setupSoundtouchWorklet} from '../client/integration/soundtouch.js';
+
+window.audio = {context: new AudioContext({sampleRate: 96000})};
+audio.soundtouchNode = await setupSoundtouchWorklet(audio.context);
+audio.gainNode = audio.context.createGain();
+
+const video = document.querySelector('video');
+audio.sourceNode = audio.context.createMediaElementSource(video);
+audio.sourceNode.connect(audio.gainNode);
+audio.gainNode
+  .connect(audio.soundtouchNode)
+  .connect(audio.context.destination);
+</script>
+<style>
+* {
+  outline: none;
+}
+:root {
+  --button-text: #222;
+  --button-background: #E4E4E4;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --button-text: #DDD;
+    --button-background: #343434;
+  }
+  body {background: #000;}
+}
+.drop-zone {
+  padding: 0.3em;
+}
+.fullscreen-container {
+  margin: 0.3em;
+  min-width: 120vh;
+  height: 80vh;
+  video {
+    width: 100%;
+    height: 100%;
+  }
+}
+label.enclosed {
+  display: inline-flex;
+  color: var(--button-text);
+  background: var(--button-background);
+  padding: 0.5em 1em;
+  margin: 0.3em;
+  line-height: 1.5em;
+  border-radius: 1.5em;
+  > *:nth-child(n+2) {
+    margin-left: 0.5em;
+  }
+  > input {
+    font-size: 110%;
+    text-align: center;
+    line-height: 1.3em;
+    border: 0px;
+    border-radius: 0.5em;
+    &[type=range]::-webkit-slider-runnable-track {
+      
+    }
+    &[type=range]::-webkit-slider-thumb {
+      
+    }
+  }
+}
+button {
+  font-size: 16px;
+  color: var(--button-text);
+  background: var(--button-background);
+  padding: 0.5em 1em;
+  margin: 0.3em;
+  display: inline-block;
+  line-height: 1.5em;
+  border: 0px;
+  border-radius: 1.5em;
+  cursor: pointer;
+}
+video::-webkit-media-controls-overlay-enclosure,
+video::-webkit-media-controls-fullscreen-button,
+video::-webkit-media-controls-volume-control-container {
+  display: none !important;
+  box-shadow: none !important;
+  background: none !important;
+  pointer-events: none !important;
+}
+
+.tune-notice {
+  position: absolute;
+  top: 5vh;
+  left: 5vw;
+  font-size: 24px;
+  font-weight: 700;
+  color: white;
+  text-shadow: 3px 3px 3px black;
+  opacity: 0.5;
+}
+.tune-notice-enter-active,
+.tune-notice-leave-active {
+  transition: all 0.5s ease-out;
+}
+.tune-notice-enter-from,
+.tune-notice-leave-to {
+  opacity: 0;
+}
+</style>
+<script>
+class Screen {
+  playbackRate=parseFloat(localStorage.playbackRate) || 1;
+  volume=parseFloat(localStorage.volume) || 0.7;
+  history=JSON.parse(localStorage.history || '[]');
+  currentFileName=null;
+  ui={};
+  drop(e) {
+    const file = e.dataTransfer.files[0];
+    this.loadFile(file);
+  };
+  fileChange() {
+    const file = this.ui.dropZone.$refs.fileInput.files[0];
+    this.loadFile(file);
+  };
+  keyDown(e) {
+    let scale = 1;
+    if (e.ctrlKey) scale = 5;
+    if (e.altKey) scale = 0.2;
+    if (e.key == 'f') {
+      //this.videoPlayer.requestFullscreen();
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      } else {
+        this.ui.dropZone.$refs.fullscreenContainer.requestFullscreen();
+      }
+    } else if (e.key == ' ') {
+      if (e.target == this.videoPlayer) return;
+      this.videoPlayer[(this.videoPlayer.paused)?'play':'pause']();
+    } else if (['Alt','Shift','Control'].includes(e.key)) { return;
+    } else if (['+','-'].includes(e.key)) {
+      this.tune('playbackRate', 0.1*scale, e.key=='-');
+    } else if (['ArrowUp','ArrowDown'].includes(e.key)) {
+      this.tune('volume', 0.02*scale, e.key=='ArrowDown');
+    } else if (['ArrowRight','ArrowLeft'].includes(e.key)) {
+      const timeShift = 5*scale*(e.key=='ArrowLeft' ? -1 : 1);
+      this.videoPlayer.currentTime += timeShift;
+      this.setTuneNotice(`time shift: ${timeShift}`);
+    } else {
+      let {key, ctrlKey, shiftKey, altKey} = e;
+      console.log({key, ctrlKey, shiftKey, altKey});
+      return;
+    }
+    e.preventDefault();
+    e.stopImmediatePropagation();
+  };
+  keyShiftChange() {
+    audio.soundtouchNode.setParam('pitch', 2**(keyShift.value/12));
+  };
+  loadFile(file) {
+    if (!file || !file.type.startsWith('video/')) return;
+    
+    this.videoPlayer.src = URL.createObjectURL(file);
+    audio.context.resume();
+    this.videoPlayer.play();
+    this.videoPlayer.playbackRate = this.playbackRate;
+    this.videoPlayer.volume = this.volume;
+    
+    this.currentFileName = file.name;
+    document.title = file.name;
+    const historyIndex = this.history.findIndex(x=>x[0]==file.name);
+    if (historyIndex == -1) {
+      this.history.unshift([file.name, 0]);
+      this.history = this.history.slice(0, 10);
+    } else {
+      const [dummyName, lastTime] = this.history.splice(historyIndex, 1)[0];
+      this.history.unshift([file.name, lastTime]);
+      this.videoPlayer.currentTime = lastTime;
+    }
+  };
+  refocus() {this.ui.dropZone.$refs.fullscreenContainer.focus();}
+  settingChange(key, e) {
+    const newValue = e?.target?.value || this.videoPlayer[key];
+    if (e) {
+      this.videoPlayer[key] = newValue;
+    } else {
+      console.log(key + ' updated to ' + newValue);
+    }
+    this[key] = newValue;
+    localStorage[key] = newValue;
+    this.setTuneNotice(`${key}: ${newValue}`);
+  };
+  setTuneNotice(notice) {
+    this.tuneNotice = notice;
+    this.showTuneNotice = true;
+    if (this.noticeTimeout) clearTimeout(this.noticeTimeout);
+    this.noticeTimeout = setTimeout(()=>{this.showTuneNotice = false;}, 1500);
+  };
+  timeUpdate() {
+    if ((this.history[0]?.[0]??'') !== this.currentFileName) return;
+    this.history[0][1] = this.videoPlayer.currentTime;
+    localStorage.history = JSON.stringify(this.history);
+  };
+  tune(key, increment, reverse) {
+    const [min, max, roundScale] = {
+      playbackRate: [0.1, 5, 100],
+      volume: [0, 1, 1000],
+    }[key];
+    let newFloatValue = this[key] + increment * (reverse ? -1 : 1);
+    let newRoundValue = Math.round(newFloatValue * roundScale) / roundScale
+    this.videoPlayer[key] = Math.min(max, Math.max(min, newRoundValue));
+  };
+  get videoPlayer() {return this.ui.dropZone.$refs.videoPlayer;}
+}
+</script>
+<script>
+  (async ()=>{
+    window.all = new Screen();
+    await Vue.endAddOn.load();
+    window.apps = Vue.endAddOn.createApp({
+      mountSelectors: ['#screen'],
+    });
+  })();
+</script>
+</head>
+<body>
+<div id="screen">
+  <div v-node-ref="[all, 'ui', 'dropZone']" class="drop-zone" v-focus v-drop-zone
+    @drop="all.drop($event)" @keydown="all.keyDown($event)" tabindex="0">
+    <input type="file" ref="fileInput" accept="video/mp4" style="display:none;" @change="all.fileChange()">
+    <div class="fullscreen-container" ref="fullscreenContainer" @fullscreenchange="all.refocus()" tabindex="-1">
+      <video ref="videoPlayer" controls
+        @ratechange="all.settingChange('playbackRate')"
+        @volumechange="all.settingChange('volume')"
+        @timeupdate="all.timeUpdate()"
+        @focus="all.refocus()"
+        >
+      </video>
+      <transition name="tune-notice">
+        <div v-show="all.showTuneNotice" class="tune-notice">{{ all.tuneNotice }}</div>
+      </transition>
+    </div>
+    <div>
+      <label class="enclosed">
+        <span>Playback Rate</span>
+        <input type="range" id="playbackRate" min="0.1" max="5" step="0.1"
+          :value="all.playbackRate" @change="all.settingChange('playbackRate',$event)">
+        <span>－ {{all.playbackRate}} ＋</span>
+      </label>
+      <label class="enclosed">
+        <span>Volume</span>
+        <input type="range" id="volume" min="0.0" max="1" step="0.02"
+          :value="all.volume" @change="all.settingChange('volume',$event)">
+        <span>↓ {{all.volume}} ↑</span>
+      </label>
+      <label class="enclosed">
+        <span>Key Shift</span>
+        <input type="number" id="keyShift" min="-12" max="12" value="0" @change="all.keyShiftChange()">
+      </label>
+      <br/>
+      <button @click="$refs.fileInput.click()">Drop a video file or click here to select file to play</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
