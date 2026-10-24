@@ -166,7 +166,10 @@ class Screen {
     audio.soundtouchNode.setParam('pitch', 2**(keyShift.value/12));
   };
   loadFile(file) {
-    if (!file || !file.type.startsWith('video/')) return;
+    if (!file) return;
+    if (!file.type.startsWith('video/')) {
+      console.warn('File type is not of a known video format, will still attempt...', file.type);
+    }
     
     this.videoPlayer.src = URL.createObjectURL(file);
     audio.context.resume();
@@ -192,7 +195,7 @@ class Screen {
     if (e) {
       this.videoPlayer[key] = newValue;
     } else {
-      console.log(key + ' updated to ' + newValue);
+      // console.log(key + ' updated to ' + newValue);
     }
     this[key] = newValue;
     localStorage[key] = newValue;
@@ -220,6 +223,7 @@ class Screen {
   };
   get videoPlayer() {return this.ui.dropZone.$refs.videoPlayer;}
 }
+console.log('To break volume limit: ', `audio.gainNode.setParam('gain',1.5);`);
 </script>
 <script>
   (async ()=>{

@@ -5,7 +5,7 @@ const {Returner} = require('../server/server.js');
 let ingestRequest = {
   parsedUrl_p: (server)=>(async function ingestRequest(req, res, next) {
     res.returner = new Returner(res, server);
-    req.parsedUrl = require('url').parse(req.url, true);
+    req.parsedUrl = new URL(req.url, req.protocol+'://'+req.headers.host);
     if (req.parsedUrl.pathname.indexOf('../') != -1) return; // ignore ever any request attempting a folder traversal
     
     req.parsedUrl.contextDepth = 0;
