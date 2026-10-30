@@ -175,7 +175,7 @@ class Screen {
     audio.context.resume();
     this.videoPlayer.play();
     this.videoPlayer.playbackRate = this.playbackRate;
-    this.videoPlayer.volume = this.volume;
+    this.settingChange('volume', this.volume);
     
     this.currentFileName = file.name;
     document.title = file.name;
@@ -190,11 +190,17 @@ class Screen {
     }
   };
   refocus() {this.ui.dropZone.$refs.fullscreenContainer.focus();}
-  settingChange(key, e) {
-    const newValue = e?.target?.value || this.videoPlayer[key];
-    if (e) {
+  settingChange(key, newValue) {
+    if (key == 'volume')
+      if (newValue > 1) {
+        this.videoPlayer[key] = 1;
+        audio.gainNode.setParam('gain', newValue * newValue);
+      } else {
+        this.videoPlayer[key] = newValue;
+        audio.gainNode.setParam('gain', 1);
+      }
+    else {
       this.videoPlayer[key] = newValue;
-    } else {
       // console.log(key + ' updated to ' + newValue);
     }
     this[key] = newValue;
@@ -215,11 +221,11 @@ class Screen {
   tune(key, increment, reverse) {
     const [min, max, roundScale] = {
       playbackRate: [0.1, 5, 100],
-      volume: [0, 1, 1000],
+      volume: [0, 2, 1000],
     }[key];
     let newFloatValue = this[key] + increment * (reverse ? -1 : 1);
     let newRoundValue = Math.round(newFloatValue * roundScale) / roundScale
-    this.videoPlayer[key] = Math.min(max, Math.max(min, newRoundValue));
+    this.settingChange(key, Math.min(max, Math.max(min, newRoundValue)));
   };
   get videoPlayer() {return this.ui.dropZone.$refs.videoPlayer;}
 }
@@ -242,8 +248,6 @@ console.log('To break volume limit: ', `audio.gainNode.setParam('gain',1.5);`);
     <input type="file" ref="fileInput" accept="video/mp4" style="display:none;" @change="all.fileChange()">
     <div class="fullscreen-container" ref="fullscreenContainer" @fullscreenchange="all.refocus()" tabindex="-1">
       <video ref="videoPlayer" controls
-        @ratechange="all.settingChange('playbackRate')"
-        @volumechange="all.settingChange('volume')"
         @timeupdate="all.timeUpdate()"
         @focus="all.refocus()"
         >
@@ -261,7 +265,7 @@ console.log('To break volume limit: ', `audio.gainNode.setParam('gain',1.5);`);
       </label>
       <label class="enclosed">
         <span>Volume</span>
-        <input type="range" id="volume" min="0.0" max="1" step="0.02"
+        <input type="range" id="volume" min="0.0" max="2" step="0.02"
           :value="all.volume" @change="all.settingChange('volume',$event)">
         <span>↓ {{all.volume}} ↑</span>
       </label>
