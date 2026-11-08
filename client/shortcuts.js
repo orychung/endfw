@@ -162,7 +162,18 @@ var browse = {
       let startIndex = result.indexOf(';base64,')+8;
       return result.slice(startIndex);
     },
-  }
+  },
+  dataURL: {
+    async toBlob(dataURL) {
+      const res = await fetch(dataURL);
+      return res.blob();
+    },
+    async toFile(dataURL, filename) {
+      if (!dataURL.startsWith('data:')) throw 'invalid data URL!';
+      const blob = await this.toBlob(dataURL);
+      return new File([blob], filename, {type: blob.type});
+    },
+  },
 };
 
 var empty = {

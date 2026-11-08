@@ -8,6 +8,10 @@
 <link rel="stylesheet" type="text/css" href="../vue/layout.css" />
 <script type="text/javascript" src="../lib/vue.global.prod.js"></script>
 <script type="text/javascript" src="../lib/vue.global.prod.js"></script>
+<script type="text/javascript" src="../lib/html5-qrcode.min.js"></script>
+<script type="text/javascript" src="../lib/html5-qrcode.min.js"></script>
+<script type="text/javascript" src="../lib/qrcode.js"></script>
+<script type="text/javascript" src="../lib/qrcode.js"></script>
 <script type="text/javascript" src="../common/builtin.js"></script>
 <script type="text/javascript" src="../common/builtin.js"></script>
 <script type="text/javascript" src="../common/global.js"></script>
@@ -57,6 +61,7 @@ th,td {
 td.green {color: green;}
 td.red {color: red;}
 ul {margin-block: 0px;}
+#qr-container {padding: 2rem;}
 </style>
 <script type="text/javascript" id="test">
 const tests = {
@@ -92,6 +97,13 @@ const tests = {
       return (status=='p1r=r1.p111e=e1.p11e=e1.');
     },
   },
+  'lib': {
+    'qrcode': async ()=>{
+      all.ui.dropZoneText = all.ui.dropZoneText + '(modified)';
+      await Vue.nextTick();
+      return (await all.ui.qrText) == all.ui.dropZoneText;
+    },
+  }
 };
 const timeTests = {
   'Array.shuffle': async ()=>{
@@ -100,6 +112,7 @@ const timeTests = {
   }
 }
 async function runTests() {
+  all.ui.outcome = {};
   tests.mapArray((fileTests,outcomeFile)=>{
     fileTests.mapArray(async (test,outcomeFeature)=>{
       all.ui.outcome.touch(outcomeFile, {green: 0, red: 0, failures: []});
@@ -132,12 +145,36 @@ Object.assign(Vue.endAddOn.commonMethods, {
     Array.from(e.clipboardData.items).forEach(item=>{
       if (item.kind=='file') {
         // testing client/builtin.js DataTransferItem.getAsFiles
-        item.files.then(files=>console.table(files));
+        console.log(item);
+        item.files.then(files=>{
+          console.table(files)
+          all.ui.html5Qrcode.scanFile(files[0], false).then(qrcodeText=>{
+            console.log({qrcodeText});
+            all.ui.dropZoneText = qrcodeText;
+          }).catch(x=>{/* do nothing if fail to scan as QR code */});
+        });
       } else {
         console.log(item);
       }
     });
-  }
+  },
+  async generateQRCode(text) {
+    const container = document.getElementById("qr-container");
+    container.innerHTML = '';
+    new QRCode(container, g.ui.dropZoneText);
+    
+    
+    let canvas = container.getElementsByTagName('canvas')[0];
+    let qrcodeText;
+    try {
+      const file = await browse.dataURL.toFile(canvas.toDataURL());
+      qrcodeText = await all.ui.html5Qrcode.scanFile(file, false);
+    } catch(e) {
+      console.error(e);
+    }
+    
+    return qrcodeText;
+  },
 });
 </script>
 <script type="text/javascript" id="main">
@@ -145,12 +182,14 @@ builtin_initMore.sql();
 async function initPage() {
   g.ui = {
     themeFaceHue: 120,
-    outcome: {},
     contextmenus: [],
     dropZoneText: 'some text, drop something here...',
     testInput: {
       color: '#333333',
     },
+    html5Qrcode: new Html5Qrcode("qr-scanner", {
+      // config for camera...skipped here
+    }, /* verbose= */ false),
   };
   globalThis.all = g;
   
@@ -161,6 +200,7 @@ async function initPage() {
   });
   
   await Vue.nextTick();
+  g.ui.loaded = true;
   runTests();
 }
 </script>
@@ -169,7 +209,9 @@ async function initPage() {
 <vueTemplates>
 <vueTemplate id="v-drop-zone">
   <div v-node-ref="[all, 'ui', 'dropZone']" v-drop-zone>
-    <p>{{ all.ui.dropZoneText }}</p>
+    <input type="text" v-model="all.ui.dropZoneText"></input>
+    <div>paste QR code image to get text</div>
+    <div id="qr-container" :text="all.ui.loaded && (all.ui.qrText = generateQRCode(all.ui.dropZoneText))"></div>
     <input type="color" v-model="all.ui.testInput.color"></input>
   </div>
 </vueTemplate>
@@ -213,5 +255,6 @@ async function initPage() {
 <div id="screen" class="flex row flex-stretch full-size">
   <v-screen :all="all"><h3>Loading Vue framework...</h3></v-screen>
 </div>
+<div id="qr-scanner" class="hidden"></div>
 </body>
 </html>

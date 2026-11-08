@@ -21,7 +21,12 @@
   
   // expose via DataTransferItem class
   DataTransferItem.defineMethod("getAsFiles", async function* getAsFiles() {
-    yield* getFilesRecursively(await this.getAsFileSystemHandle());
+    const handle = await this.getAsFileSystemHandle();
+    if (handle) {
+      yield* getFilesRecursively(handle);
+    } else {
+      yield this.getAsFile(); // if not from file system, one item should be a single file
+    }
   });
   Object.defineProperty(DataTransferItem.prototype, "files", {
     configurable: true,
