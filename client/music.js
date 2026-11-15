@@ -107,9 +107,12 @@
   }
 
   class MusicalNote extends MusicalItem {
-    // todo: support note overtones
     constructor(ctx, options={}) {
       super(ctx, options);
+    }
+    set frequency(value) {
+      this.options.frequency = value;
+      if (this.osc) this.osc.frequency.setValueAtTime(value, this.ctx.currentTime);
     }
     set type(value) {
       this.osc && (this.osc.type = value);
@@ -125,6 +128,7 @@
       if (this.options.wave) {
         this.osc.setPeriodicWave(this.options.wave);
       } else {
+        // setPeriodicWave automatically sets type to "custom"
         this.osc.type = this.options.type;
       };
       this.osc.frequency.setValueAtTime(this.options.frequency, this.ctx.currentTime);

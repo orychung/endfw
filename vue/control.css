@@ -96,6 +96,34 @@ grid-row.modal-field {
   }
 }
 
+piano-frame {
+  overflow: hidden;
+  padding: 0;
+}
+piano-octave {
+  display: inline-block;
+  position: relative;
+  margin: 0;
+  padding: 0;
+  --scale: 1;
+  note {
+    display: inline-block;
+  }
+  note.white {
+    height: 100%;
+    width: calc(100% / 7);
+    border: 0.12em solid black;
+  }
+  note.black {
+    position: absolute;
+    top: 0px;
+    left: calc(100% / 12 * var(--note));
+    height: 60%;
+    width: calc(110% / 12);
+    background: black;
+  }
+}
+
 screen-layer {
   pointer-events: none;
   & > * {

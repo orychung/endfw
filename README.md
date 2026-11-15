@@ -16,10 +16,10 @@ A minimalist JS framework library for browser and node.js framework
 ### in browser
 Load via jsdelivr CDN:
 ```html
-<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.3/common/builtin.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.3/client/builtin.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.3/client/shortcuts.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.3/client/music.js" charset="utf-8"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.7/common/builtin.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.7/client/builtin.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.7/client/shortcuts.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.7/client/music.js" charset="utf-8"></script>
 ```
 
 * Client scripts can be included on a need basis
@@ -29,27 +29,12 @@ Load via jsdelivr CDN:
 
 In header:
 ```html
-<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.3/vue/control.css" />
-<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.3/vue/layout.css" />
-<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.3/common/builtin.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.3/common/global.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.3/client/builtin.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.3/client/shortcuts.js"></script>
-<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.3/client/quick_vue.js"></script>
-```
-
-In onload listener:
-```js
-  g.ui = {
-    contextmenus: [],
-  };
-  globalThis.all = g;
-  Vue.endAddOn.useBasicMethods();
-  await Vue.endAddOn.load();
-  Vue.endAddOn.createApp({
-    methods: uiHandlers, // methods here are only available to top app, not child components
-    mountSelectors: ['#screen'],
-  });
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.7/vue/control.css" />
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.7/vue/layout.css" />
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.7/common/builtin.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.7/client/builtin.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.7/client/shortcuts.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/orychung/endfw@0.8.7/client/quick_vue.js"></script>
 ```
 
 In body:
@@ -66,11 +51,24 @@ In body:
     <t-contextmenu :all="all" :w="all.ui.contextmenus"></t-contextmenu>
   </screen-layer>
 </div>
+<script>
+  (async ()=>{
+    window.all = {};
+    all.ui = {
+      contextmenus: [],
+      modals: [],
+    };
+    await Vue.endAddOn.load();
+    window.apps = Vue.endAddOn.createApp({
+      mountSelectors: ['#screen'],
+    });
+  })();
+</script>
 ```
 
 ### in node
 ```bash
-npm install github:orychung/endfw@0.8.3
+npm install github:orychung/endfw@0.8.7
 ```
 ```javascript
 globalThis.endfw = require('endfw');
